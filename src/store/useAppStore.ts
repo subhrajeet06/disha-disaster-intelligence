@@ -1,8 +1,11 @@
 import { create } from 'zustand'
-import type { AuditEntry, DataLayerKey, FilterKey, PriorityLocation, RouteInfo, Toast, VerificationStatus } from '../types'
-import { AUDIT_LOG, PRIORITIES } from '../data/mock'
+import type { AuditEntry, DataLayerKey, DisasterEvent, FilterKey, PriorityLocation, RouteInfo, Toast, VerificationStatus } from '../types'
+import { AUDIT_LOG, DISASTER_EVENTS, PRIORITIES } from '../data/mock'
 
 export type VerificationAction = 'confirmed' | 'rejected' | 'uncertain' | 'corrected'
+
+/** Top-level pages reachable from the sidebar / mobile nav. */
+export type PageKey = 'command' | 'scenario' | 'imagery' | 'reports' | 'audit'
 
 export interface LocationState {
   status: VerificationStatus
@@ -16,6 +19,8 @@ export type ThemeMode = 'light' | 'dark'
 
 interface AppState {
   activeEventId: string
+  activePage: PageKey
+  scenarios: DisasterEvent[]
   selectedLocationId: string | null
   activeFilters: FilterKey[]
   locationOverrides: Record<string, LocationState>
@@ -31,6 +36,9 @@ interface AppState {
   routeLoading: boolean
   routeError: string | null
 
+  setActivePage: (p: PageKey) => void
+  addScenario: (input: { name: string; type: DisasterEvent['type']; region: string }) => void
+  simulateUpload: (eventId: string) => void
   setActiveEvent: (id: string) => void
   selectLocation: (id: string | null) => void
   openDrawer: (id: string) => void
@@ -70,6 +78,8 @@ function initialTheme(): ThemeMode {
 
 export const useAppStore = create<AppState>((set) => ({
   activeEventId: 'evt-cyclone-nivar',
+  activePage: 'command',
+  scenarios: DISASTER_EVENTS,
   selectedLocationId: null,
   activeFilters: [],
   locationOverrides: {},
@@ -86,6 +96,81 @@ export const useAppStore = create<AppState>((set) => ({
   route: null,
   routeLoading: false,
   routeError: null,
+
+  setActivePage: (p) => set({ activePage: p, mobileSheetOpen: false }),
+
+  addScenario: ({ name, type, region }) =>
+    set((s) => {
+      const id = `evt-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${Date.now().toString(36)}`
+      const scenario: DisasterEvent = {
+        id,
+        name,
+        type,
+        region,
+        status: 'processing',
+        startedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' IST',
+        imageryCount: 0,
+        aiProgress: 0,
+      }
+      const now = new Date().toTimeString().slice(0, 5)
+      return {
+        scenarios: [scenario, ...s.scenarios],
+        activeEventId: id,
+        activePage: 'command',
+        selectedLocationId: null,
+        auditLog: [
+          { id: `au${Date.now()}sc`, time: now, actor: 'You', action: 'Created disaster scenario', target: name },
+          ...s.auditLog,
+        ].slice(0, 60),
+        toasts: [
+          ...s.toasts,
+          { id: ++toastId, tone: 'success', title: 'Scenario created', detail: `${name} · ready for imagery ingestion` },
+        ],
+      }
+    }),
+
+  simulateUpload: (eventId) =>
+    set((s) => {
+      const target = s.scenarios.find((e) => e.id === eventId)
+      if (!target) return {}
+      const now = new Date().toTimeString().slice(0, 5)
+      const addedImages = 6 + Math.floor(Math.random() * 6)
+      const nextProgress = Math.min(100, target.aiProgress + 15 + Math.floor(Math.random() * 10))
+      const nextStatus: DisasterEvent['status'] = nextProgress >= 100 ? 'review' : 'processing'
+      return {
+        scenarios: s.scenarios.map((e) =>
+          e.id === eventId
+            ? { ...e, imageryCount: e.imageryCount + addedImages, aiProgress: nextProgress, status: nextStatus }
+            : e,
+        ),
+        auditLog: [
+          {
+            id: `au${Date.now()}up`,
+            time: now,
+            actor: 'You',
+            action: `Uploaded ${addedImages} images`,
+            target: target.name,
+          },
+          {
+            id: `au${Date.now()}ai`,
+            time: now,
+            actor: 'System',
+            action: nextProgress >= 100 ? 'AI processing complete' : 'AI processing progressed',
+            target: target.name,
+          },
+          ...s.auditLog,
+        ].slice(0, 60),
+        toasts: [
+          ...s.toasts,
+          {
+            id: ++toastId,
+            tone: 'success',
+            title: `${addedImages} images queued`,
+            detail: `${target.name} · AI processing at ${nextProgress}%`,
+          },
+        ],
+      }
+    }),
 
   setActiveEvent: (id) => set({ activeEventId: id, selectedLocationId: null }),
 
@@ -152,7 +237,7 @@ export const useAppStore = create<AppState>((set) => ({
           target: report.name,
         },
         ...s.auditLog,
-      ].slice(0, 14),
+      ].slice(0, 60),
       toasts: [
         ...s.toasts,
         {
@@ -237,7 +322,7 @@ export const useAppStore = create<AppState>((set) => ({
 
       return {
         locationOverrides: { ...s.locationOverrides, [id]: next },
-        auditLog: [reAudit, audit, ...s.auditLog].slice(0, 14),
+        auditLog: [reAudit, audit, ...s.auditLog].slice(0, 60),
         toasts: [...s.toasts, { ...toast, id: ++toastId }],
       }
     }),

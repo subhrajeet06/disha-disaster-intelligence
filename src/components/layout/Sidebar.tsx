@@ -1,14 +1,13 @@
 import { Activity, ChevronDown, Layers, Map, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera } from 'lucide-react'
-import { useAppStore } from '../../store/useAppStore'
-import { DISASTER_EVENTS } from '../../data/mock'
+import { useAppStore, type PageKey } from '../../store/useAppStore'
 import type { DisasterEvent } from '../../types'
 
-const NAV = [
-  { label: 'Command', icon: Radar, active: true },
-  { label: 'Scenario', icon: Layers },
-  { label: 'Imagery', icon: Warehouse },
-  { label: 'Reports', icon: Activity },
-  { label: 'Audit', icon: ShieldCheck },
+const NAV: Array<{ label: string; icon: typeof Radar; page?: PageKey; disabled?: boolean }> = [
+  { label: 'Command', icon: Radar, page: 'command' },
+  { label: 'Scenario', icon: Layers, page: 'scenario' },
+  { label: 'Imagery', icon: Warehouse, page: 'imagery' },
+  { label: 'Reports', icon: Activity, page: 'reports' },
+  { label: 'Audit', icon: ShieldCheck, page: 'audit' },
 ]
 
 export function EventIcon({ type }: { type: DisasterEvent['type'] }) {
@@ -30,8 +29,11 @@ export function Sidebar() {
   const activeEventId = useAppStore((s) => s.activeEventId)
   const setActiveEvent = useAppStore((s) => s.setActiveEvent)
   const setReportModal = useAppStore((s) => s.setReportModal)
-  const activeEvent = DISASTER_EVENTS.find((e) => e.id === activeEventId) ?? DISASTER_EVENTS[0]
+  const scenarios = useAppStore((s) => s.scenarios)
+  const activeEvent = scenarios.find((e) => e.id === activeEventId) ?? scenarios[0]
   const auditLog = useAppStore((s) => s.auditLog)
+  const activePage = useAppStore((s) => s.activePage)
+  const setActivePage = useAppStore((s) => s.setActivePage)
 
   return (
     <aside
@@ -63,17 +65,31 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto scroll-thin">
         {/* Nav */}
         <nav className="px-3 pt-4 space-y-1">
-          {NAV.map((n) => (
-            <button
-              key={n.label}
-              className={`flex items-center rounded-[16px] py-2.5 text-sm font-semibold transition-colors duration-200 ${collapsed ? 'w-10 justify-center' : 'w-full gap-3 px-4'} ${
-                n.active ? 'bg-white/15 text-white' : 'text-white/65 hover:bg-white/8 hover:text-white'
-              }`}
-            >
-              <n.icon className="w-[18px] h-[18px]" />
-              {!collapsed && n.label}
-            </button>
-          ))}
+          {NAV.map((n) => {
+            const active = n.page ? activePage === n.page : false
+            return (
+              <button
+                key={n.label}
+                disabled={n.disabled}
+                onClick={n.page ? () => setActivePage(n.page as PageKey) : undefined}
+                title={n.disabled ? 'Coming soon' : undefined}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center rounded-[16px] py-2.5 text-sm font-semibold transition-colors duration-200 ${collapsed ? 'w-10 justify-center' : 'w-full gap-3 px-4'} ${
+                  active
+                    ? 'bg-white/15 text-white'
+                    : n.disabled
+                      ? 'text-white/30 cursor-not-allowed'
+                      : 'text-white/65 hover:bg-white/8 hover:text-white'
+                }`}
+              >
+                <n.icon className="w-[18px] h-[18px]" />
+                {!collapsed && n.label}
+                {!collapsed && n.disabled && (
+                  <span className="ml-auto text-[9px] font-bold text-white/35">SOON</span>
+                )}
+              </button>
+            )
+          })}
         </nav>
 
         {/* New field report */}
@@ -120,7 +136,7 @@ export function Sidebar() {
             </div>
             {!collapsed && (
               <div className="absolute inset-x-4 top-full mt-1.5 z-30 hidden group-hover:block">
-                {DISASTER_EVENTS.filter((e) => e.id !== activeEventId).map((e) => (
+                {scenarios.filter((e) => e.id !== activeEventId).map((e) => (
                   <button
                     key={e.id}
                     onClick={() => setActiveEvent(e.id)}
@@ -138,7 +154,15 @@ export function Sidebar() {
       {/* Audit trail */}
       {!collapsed && (
         <div className="px-6 pb-5 pt-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-3">Live audit</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Live audit</p>
+            <button
+              onClick={() => setActivePage('audit')}
+              className="text-[10px] font-bold text-[#9ad4c1] hover:text-white transition-colors duration-200"
+            >
+              View all
+            </button>
+          </div>
           <div className="space-y-2.5">
             {auditLog.slice(0, 4).map((a) => (
               <div key={a.id} className="flex items-start gap-2.5">
