@@ -98,13 +98,13 @@ export function Sidebar() {
             onClick={() => setReportModal(true)}
             className={`flex items-center gap-3 rounded-[20px] bg-white text-[#0b4d3f] px-4 py-3 font-bold text-sm hover:bg-white/95 hover:shadow-lg transition-all duration-200 shadow-md ${collapsed ? 'w-10 justify-center' : 'w-full'}`}
           >
-            <span className="flex items-center justify-center w-8 h-8 rounded-[12px] bg-[#13735f] text-white">
+            <span className="flex items-center justify-center w-8 h-8 rounded-[12px] bg-[#13735f] text-white shrink-0">
               <Camera className="w-4 h-4" />
             </span>
             {!collapsed && (
               <>
-                <span>New field report</span>
-                <span className="ml-auto text-[9px] font-extrabold bg-[#e9b949] text-[#4a3a05] rounded-full px-2 py-0.5">
+                <span className="whitespace-nowrap">New field report</span>
+                <span className="ml-auto text-[9px] font-extrabold bg-[#e9b949] text-[#4a3a05] rounded-full px-2 py-0.5 shrink-0">
                   GPS
                 </span>
               </>
