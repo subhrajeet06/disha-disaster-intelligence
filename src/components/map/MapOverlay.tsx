@@ -27,7 +27,7 @@ export function MapOverlay() {
     setKpiFilter(isOn(k) ? null : k)
   }
 
-  return (
+  /*return (
     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
       <div className="flex items-center gap-1.5 bg-[var(--color-panel)]/90 backdrop-blur rounded-full p-1.5 shadow-lg border border-edge">
         {LAYERS.map((l) => (
@@ -62,5 +62,5 @@ export function MapOverlay() {
         Coastal Odisha · Cyclone Nivar
       </div>
     </div>
-  )
+  )*/
 }
