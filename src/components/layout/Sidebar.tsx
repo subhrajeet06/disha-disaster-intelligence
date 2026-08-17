@@ -10,6 +10,9 @@ const NAV: Array<{ label: string; icon: typeof Radar; page?: PageKey; disabled?:
   { label: 'Audit', icon: ShieldCheck, page: 'audit' },
 ]
 
+/** One source of truth for every collapsed tile → identical 40x40 square */
+const TILE = 'w-10 h-10 p-0 justify-center shrink-0'
+
 export function EventIcon({ type }: { type: DisasterEvent['type'] }) {
   const cls = 'w-4 h-4'
   switch (type) {
@@ -37,14 +40,22 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`hidden lg:flex shrink-0 flex-col h-screen bg-gradient-to-b from-[#13735f] to-[#0b4d3f] text-white transition-[width] duration-200 ${collapsed ? 'w-16' : 'w-[268px]'}`}
+      className={`hidden lg:flex shrink-0 flex-col h-screen bg-gradient-to-b from-[#13735f] to-[#0b4d3f] text-white transition-[width] duration-200 ${
+        collapsed ? 'w-16' : 'w-[268px]'
+      }`}
     >
       {/* Brand */}
       <div
-        className={`pt-7 pb-6 border-b border-white/10 flex items-center ${collapsed ? 'justify-center px-3' : 'px-6 gap-3'}`}
+        className={`pt-7 pb-6 border-b border-white/10 flex items-center ${
+          collapsed ? 'justify-center px-3' : 'px-6 gap-3'
+        }`}
       >
-        <div className="w-11 h-11 rounded-[14px] bg-white/15 backdrop-blur flex items-center justify-center">
-          <Map className="w-6 h-6 text-white" />
+        <div
+          className={`rounded-[14px] bg-white/15 backdrop-blur flex items-center justify-center shrink-0 ${
+            collapsed ? 'w-10 h-10' : 'w-11 h-11'
+          }`}
+        >
+          <Map className={collapsed ? 'w-5 h-5 text-white' : 'w-6 h-6 text-white'} />
         </div>
         {!collapsed && (
           <div className="leading-none">
@@ -55,12 +66,6 @@ export function Sidebar() {
           </div>
         )}
       </div>
-      {!collapsed && (
-        <div className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/85">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          Advisory system · Human in control
-        </div>
-      )}
 
       <div className="flex-1 overflow-y-auto scroll-thin">
         {/* Nav */}
@@ -72,9 +77,11 @@ export function Sidebar() {
                 key={n.label}
                 disabled={n.disabled}
                 onClick={n.page ? () => setActivePage(n.page as PageKey) : undefined}
-                title={n.disabled ? 'Coming soon' : undefined}
+                title={collapsed ? n.label : n.disabled ? 'Coming soon' : undefined}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center rounded-[16px] py-2.5 text-sm font-semibold transition-colors duration-200 ${collapsed ? 'w-10 justify-center' : 'w-full gap-3 px-4'} ${
+                className={`flex items-center rounded-[16px] text-sm font-semibold transition-colors duration-200 ${
+                  collapsed ? TILE : 'w-full h-10 gap-3 px-4'
+                } ${
                   active
                     ? 'bg-white/15 text-white'
                     : n.disabled
@@ -82,7 +89,7 @@ export function Sidebar() {
                       : 'text-white/65 hover:bg-white/8 hover:text-white'
                 }`}
               >
-                <n.icon className="w-[18px] h-[18px]" />
+                <n.icon className="w-[18px] h-[18px] shrink-0" />
                 {!collapsed && n.label}
                 {!collapsed && n.disabled && (
                   <span className="ml-auto text-[9px] font-bold text-white/35">SOON</span>
@@ -96,13 +103,18 @@ export function Sidebar() {
         <div className="px-3 pt-5">
           <button
             onClick={() => setReportModal(true)}
-            className={`flex items-center gap-3 rounded-[20px] bg-white text-[#0b4d3f] px-4 py-3 font-bold text-sm hover:bg-white/95 hover:shadow-lg transition-all duration-200 shadow-md ${collapsed ? 'w-10 justify-center' : 'w-full'}`}
+            title={collapsed ? 'New field report' : undefined}
+            className={`flex items-center rounded-[16px] bg-white text-[#0b4d3f] font-bold text-sm shadow-md hover:bg-white/95 hover:shadow-lg transition-all duration-200 ${
+              collapsed ? TILE : 'w-full gap-3 px-4 py-3 rounded-[20px]'
+            }`}
           >
-            <span className="flex items-center justify-center w-8 h-8 rounded-[12px] bg-[#13735f] text-white shrink-0">
-              <Camera className="w-4 h-4" />
-            </span>
-            {!collapsed && (
+            {collapsed ? (
+              <Camera className="w-[18px] h-[18px]" />
+            ) : (
               <>
+                <span className="flex items-center justify-center w-8 h-8 rounded-[12px] bg-[#13735f] text-white shrink-0">
+                  <Camera className="w-4 h-4" />
+                </span>
                 <span className="whitespace-nowrap">New field report</span>
                 <span className="ml-auto text-[9px] font-extrabold bg-[#e9b949] text-[#4a3a05] rounded-full px-2 py-0.5 shrink-0">
                   GPS
@@ -115,36 +127,48 @@ export function Sidebar() {
         {/* Active scenario */}
         <div className="mt-6 px-3">
           {!collapsed && (
-            <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">Active scenario</p>
+            <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">
+              Active scenario
+            </p>
           )}
           <div className="relative group">
             <div
-              className={`flex items-center rounded-[20px] bg-white/10 py-3.5 border border-white/15 ${collapsed ? 'w-10 justify-center' : 'px-4 gap-3'}`}
+              title={collapsed ? activeEvent.name : undefined}
+              className={`flex items-center bg-white/10 border border-white/15 ${
+                collapsed ? `${TILE} rounded-[16px]` : 'w-full rounded-[20px] px-4 py-3.5 gap-3'
+              }`}
             >
-              <span className="flex items-center justify-center w-9 h-9 rounded-[12px] bg-white/15 shrink-0">
+              {collapsed ? (
                 <EventIcon type={activeEvent.type} />
-              </span>
-              {!collapsed && (
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-bold truncate">{activeEvent.name}</p>
-                  <p className="text-[11px] text-white/55 truncate">
-                    {activeEvent.region} · {activeEvent.status === 'review' ? 'In review' : activeEvent.status}
-                  </p>
-                </div>
+              ) : (
+                <>
+                  <span className="flex items-center justify-center w-9 h-9 rounded-[12px] bg-white/15 shrink-0">
+                    <EventIcon type={activeEvent.type} />
+                  </span>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-bold truncate">{activeEvent.name}</p>
+                    <p className="text-[11px] text-white/55 truncate">
+                      {activeEvent.region} · {activeEvent.status === 'review' ? 'In review' : activeEvent.status}
+                    </p>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-white/50 shrink-0" />
+                </>
               )}
-              {!collapsed && <ChevronDown className="w-4 h-4 text-white/50" />}
             </div>
+
             {!collapsed && (
-              <div className="absolute inset-x-4 top-full mt-1.5 z-30 hidden group-hover:block">
-                {scenarios.filter((e) => e.id !== activeEventId).map((e) => (
-                  <button
-                    key={e.id}
-                    onClick={() => setActiveEvent(e.id)}
-                    className="w-full text-left bg-[#0b4d3f] rounded-[16px] px-4 py-2.5 text-xs font-semibold text-white/80 hover:bg-[#105a48]"
-                  >
-                    {e.name}
-                  </button>
-                ))}
+              <div className="absolute inset-x-4 top-full mt-1.5 z-30 hidden group-hover:block space-y-1">
+                {scenarios
+                  .filter((e) => e.id !== activeEventId)
+                  .map((e) => (
+                    <button
+                      key={e.id}
+                      onClick={() => setActiveEvent(e.id)}
+                      className="w-full text-left bg-[#0b4d3f] rounded-[16px] px-4 py-2.5 text-xs font-semibold text-white/80 hover:bg-[#105a48]"
+                    >
+                      {e.name}
+                    </button>
+                  ))}
               </div>
             )}
           </div>
@@ -166,7 +190,11 @@ export function Sidebar() {
           <div className="space-y-2.5">
             {auditLog.slice(0, 4).map((a) => (
               <div key={a.id} className="flex items-start gap-2.5">
-                <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${a.actor === 'System' ? 'bg-[#e9b949]' : 'bg-[#7fd0b8]'}`} />
+                <span
+                  className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${
+                    a.actor === 'System' ? 'bg-[#e9b949]' : 'bg-[#7fd0b8]'
+                  }`}
+                />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-white/85 leading-snug truncate">{a.action}</p>
                   <p className="text-[10px] text-white/45">
