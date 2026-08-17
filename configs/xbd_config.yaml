@@ -1,0 +1,59 @@
+# =============================================================================
+# DISHA — xBD Dataset Preparation Configuration
+# =============================================================================
+# All tunable parameters for the preprocessing pipeline.
+# Run: python scripts/prepare_xbd.py
+# =============================================================================
+
+# --- Paths (relative to project root) ---
+raw_dataset_path: "train_images_labels_targets/train"
+output_dataset_path: "data/processed/xbd_disha"
+reports_path: "reports"
+
+# --- Sample Selection ---
+target_samples: 2000
+random_seed: 42
+
+# --- Event-Level Split ---
+# Strict event-level splitting to prevent data leakage.
+# Approximate ratios: Train ~83%, Val ~12%, Test ~5%
+train_events:
+  - "socal-fire"
+  - "hurricane-michael"
+  - "hurricane-florence"
+  - "hurricane-harvey"
+  - "midwest-flooding"
+  - "hurricane-matthew"
+
+val_events:
+  - "santa-rosa-wildfire"
+  - "mexico-earthquake"
+
+test_events:
+  - "palu-tsunami"
+  - "guatemala-volcano"
+
+# --- Processing Options ---
+generate_masks: true
+cross_validate_masks: true
+generate_visualizations: true
+num_visualizations: 30
+
+# --- Expected Image Properties ---
+expected_width: 1024
+expected_height: 1024
+
+# --- Damage Class Mapping ---
+damage_classes:
+  0: "background"
+  1: "no_damage"
+  2: "minor_damage"
+  3: "major_damage"
+  4: "destroyed"
+
+# xBD JSON subtype → numeric class ID
+damage_label_map:
+  "no-damage": 1
+  "minor-damage": 2
+  "major-damage": 3
+  "destroyed": 4

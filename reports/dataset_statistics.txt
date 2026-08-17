@@ -1,0 +1,58 @@
+DATASET STATISTICS
+============================================================
+
+Total pairs: 2000
+
+Train          1659 pairs (83.0%)
+Val             247 pairs (12.3%)
+Test             94 pairs (4.7%)
+
+--- Damage Distribution (pixel counts) ---
+  0 background        1972976435 pixels ( 94.1%)
+  1 no_damage           79924554 pixels (  3.8%)
+  2 minor_damage        15065716 pixels (  0.7%)
+  3 major_damage        19732880 pixels (  0.9%)
+  4 destroyed            9452415 pixels (  0.5%)
+
+--- Damage Distribution (building counts) ---
+  1 no_damage          49958 buildings ( 60.6%)
+  2 minor_damage       11651 buildings ( 14.1%)
+  3 major_damage       11696 buildings ( 14.2%)
+  4 destroyed           9178 buildings ( 11.1%)
+  TOTAL                82483 buildings
+
+--- TRAIN Split ---
+  Pairs: 1659
+  Events: {'hurricane-florence': 228, 'hurricane-harvey': 228, 'hurricane-matthew': 170, 'hurricane-michael': 245, 'midwest-flooding': 199, 'socal-fire': 589}
+    no_damage        33500 ( 55.4%)
+    minor_damage     11491 ( 19.0%)
+    major_damage     11304 ( 18.7%)
+    destroyed         4223 (  7.0%)
+
+--- VAL Split ---
+  Pairs: 247
+  Events: {'mexico-earthquake': 86, 'santa-rosa-wildfire': 161}
+    no_damage        11692 ( 77.0%)
+    minor_damage       150 (  1.0%)
+    major_damage        73 (  0.5%)
+    destroyed         3269 ( 21.5%)
+
+--- TEST Split ---
+  Pairs: 94
+  Events: {'guatemala-volcano': 13, 'palu-tsunami': 81}
+    no_damage         4766 ( 70.3%)
+    minor_damage        10 (  0.1%)
+    major_damage       319 (  4.7%)
+    destroyed         1686 ( 24.9%)
+
+--- Disaster Event Distribution ---
+  socal-fire                   589 ( 29.4%)
+  hurricane-michael            245 ( 12.2%)
+  hurricane-florence           228 ( 11.4%)
+  hurricane-harvey             228 ( 11.4%)
+  midwest-flooding             199 ( 10.0%)
+  hurricane-matthew            170 (  8.5%)
+  santa-rosa-wildfire          161 (  8.1%)
+  mexico-earthquake             86 (  4.3%)
+  palu-tsunami                  81 (  4.0%)
+  guatemala-volcano             13 (  0.7%)

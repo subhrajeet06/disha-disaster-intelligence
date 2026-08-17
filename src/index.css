@@ -1,0 +1,244 @@
+@import 'tailwindcss';
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
+/* Class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Design tokens extracted from wilderness-international.design.md */
+  --color-primary: #13735f;
+  --color-primary-deep: #0b4d3f;
+  --color-primary-soft: #e6f2ef;
+  --color-primary-mist: #f2f8f6;
+  --color-on-primary: #ffffff;
+  --color-background: #ffffff;
+  --color-surface: #13735f;
+  --color-border: #13735f;
+  --color-ink: #333333;
+  --color-ink-muted: #5c6b66;
+  --color-accent: #0000ee;
+  --color-fog: #f5f7f6;
+  --color-haze: #e8efec;
+  --color-gold: #e9b949;
+
+  --font-sans: 'Sora', 'Arial', sans-serif;
+
+  /* Severity palette — consistently used across app (green→red) */
+  --color-sev-none: #13735f;
+  --color-sev-mild: #7fb069;
+  --color-sev-moderate: #e9b949;
+  --color-sev-severe: #e2622b;
+  --color-sev-critical: #c0392b;
+
+  /* Severity pill backgrounds / accent text */
+  --color-sev-bg-none: #e6f2ef;
+  --color-sev-bg-mild: #eff5e6;
+  --color-sev-bg-moderate: #faf3dd;
+  --color-sev-bg-severe: #fdf0e6;
+  --color-sev-bg-critical: #fdebe7;
+  --color-sev-text-none: #13735f;
+  --color-sev-text-mild: #5f8a3f;
+  --color-sev-text-moderate: #a97c12;
+  --color-sev-text-severe: #b94f1f;
+  --color-sev-text-critical: #a4311f;
+  --color-warn-bg: #faf3dd;
+  --color-warn-text: #8a6a12;
+  --color-info-bg: #e9f1f5;
+  --color-info-text: #245f7a;
+  --color-danger-bg: #fdebe7;
+  --color-danger-text: #a4311f;
+
+  --radius-sm: 32px;
+  --radius-md: 64px;
+  --radius-pill: 999px;
+
+  /* Semantic surfaces — overridden below in .dark */
+  --color-panel: #ffffff;
+  --color-panel-soft: #f5f7f6;
+  --color-panel-tint: #e6f2ef;
+  --color-edge: #e8efec;
+  --color-edge-strong: #d3dfda;
+  --color-ink: #333333;
+  --color-ink-soft: #5c6b66;
+  --color-ink-faint: #8aa099;
+  --color-map-bg: #dfe8e4;
+
+  --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  --animate-toast-in: toast-in 220ms ease-in-out;
+  --animate-sheet-up: sheet-up 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --animate-drawer-in: drawer-in 320ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --animate-fade-up: fade-up 640ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --animate-pulse-ring: pulse-ring 1600ms ease-in-out infinite;
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes drawer-in {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(19, 115, 95, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 12px rgba(19, 115, 95, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(19, 115, 95, 0);
+    }
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Dark mode token overrides ---- */
+.dark {
+  color-scheme: dark;
+  --color-background: #0e1815;
+  --color-ink: #e7f0ea;
+  --color-ink-soft: #a5bcb1;
+  --color-ink-faint: #7d958a;
+  --color-panel: #11231c;
+  --color-panel-soft: #162b22;
+  --color-panel-tint: #1b3a2f;
+  --color-edge: #244036;
+  --color-edge-strong: #2f4f43;
+  --color-map-bg: #0e1815;
+  --color-primary: #1f8f77;
+  --color-primary-deep: #0b4d3f;
+  --color-sev-none: #1f8f77;
+  --color-sev-bg-none: #15302a;
+  --color-sev-bg-mild: #21381f;
+  --color-sev-bg-moderate: #3a3016;
+  --color-sev-bg-severe: #3a2517;
+  --color-sev-bg-critical: #3a1d18;
+  --color-sev-text-none: #1f8f77;
+  --color-sev-text-mild: #9dc383;
+  --color-sev-text-moderate: #e9b949;
+  --color-sev-text-severe: #f08a5b;
+  --color-sev-text-critical: #f09a8a;
+  --color-warn-bg: #3a3016;
+  --color-warn-text: #e9b949;
+  --color-info-bg: #1a2c38;
+  --color-info-text: #7fb6d4;
+  --color-danger-bg: #3a1d18;
+  --color-danger-text: #f09a8a;
+}
+
+.dark body {
+  background: var(--color-background);
+}
+
+/* MapLibre control theming */
+.maplibregl-ctrl-group {
+  border-radius: 16px !important;
+  overflow: hidden;
+  border: 1px solid var(--color-edge) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+  background: var(--color-panel) !important;
+}
+.maplibregl-ctrl-group button {
+  background: var(--color-panel) !important;
+  width: 36px !important;
+  height: 36px !important;
+}
+.maplibregl-ctrl-group button:hover {
+  background: var(--color-panel-soft) !important;
+}
+.maplibregl-ctrl-attrib {
+  background: var(--color-panel) !important;
+  color: var(--color-ink-soft) !important;
+  font-size: 10px !important;
+  border-radius: 12px 0 0 0;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-ink-soft) !important;
+}
+.maplibregl-canvas {
+  outline: none;
+}
+
+/* MapLibre popup */
+.maplibregl-popup-content {
+  border-radius: 16px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2) !important;
+  padding: 12px 16px !important;
+}
+.dark .maplibregl-popup-content {
+  background: var(--color-panel);
+  color: var(--color-ink);
+}
+.dark .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: var(--color-panel);
+}
+.dark .maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: var(--color-panel);
+}
+
+/* Thin scrollbars for panel scroll areas */
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: #c7d6d0;
+  border-radius: 999px;
+}
+.dark .scroll-thin::-webkit-scrollbar-thumb {
+  background: #2f4f43;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

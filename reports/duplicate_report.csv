@@ -1,0 +1,2 @@
+sample_id_1,file_type_1,sample_id_2,file_type_2,duplicate_type,hash,path_1,path_2
+socal-fire_00000461,post_image,socal-fire_00000589,post_image,near_duplicate,aaaaaaaaaaaaaaaa,C:\Users\soura\Downloads\disha-disaster-intelligence-main\disha-disaster-intelligence-main\train_images_labels_targets\train\images\socal-fire_00000461_post_disaster.png,C:\Users\soura\Downloads\disha-disaster-intelligence-main\disha-disaster-intelligence-main\train_images_labels_targets\train\images\socal-fire_00000589_post_disaster.png

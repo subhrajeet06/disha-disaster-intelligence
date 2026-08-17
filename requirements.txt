@@ -1,0 +1,12 @@
+# DISHA xBD Dataset Preparation Pipeline
+# Only preprocessing dependencies — no ML frameworks
+
+Pillow>=9.0
+numpy>=1.23
+shapely>=2.0
+matplotlib>=3.6
+pandas>=1.5
+pyyaml>=6.0
+tqdm>=4.64
+opencv-python-headless>=4.7
+imagehash>=4.3

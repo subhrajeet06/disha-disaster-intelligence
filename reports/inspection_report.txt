@@ -1,0 +1,68 @@
+xBD DATASET INSPECTION
+============================================================
+
+Root directory: C:\Users\soura\Downloads\disha-disaster-intelligence-main\disha-disaster-intelligence-main\train_images_labels_targets\train
+Exists: True
+
+Subdirectories found: ['images', 'labels', 'targets']
+
+--- File Counts ---
+Image files (.png):   5598
+Label files (.json):  5598
+Target files (.png):  5598
+
+--- Image Breakdown ---
+Pre-disaster images:  2799
+Post-disaster images: 2799
+Unique sample keys:   2799
+
+--- Disaster Events (10 total) ---
+Event                      Total Files    Pairs
+--------------------------------------------------
+socal-fire                        1646      823
+hurricane-michael                  686      343
+hurricane-florence                 638      319
+hurricane-harvey                   638      319
+midwest-flooding                   558      279
+hurricane-matthew                  476      238
+santa-rosa-wildfire                452      226
+mexico-earthquake                  242      121
+palu-tsunami                       226      113
+guatemala-volcano                   36       18
+
+--- Naming Convention ---
+Sample image name:  guatemala-volcano_00000000_post_disaster.png
+Sample label name:  guatemala-volcano_00000000_post_disaster.json
+Sample target name: guatemala-volcano_00000000_post_disaster_target.png
+Pattern: {event}_{8-digit-id}_{pre|post}_disaster.{png|json}
+
+--- Image Dimensions (sampling first 5) ---
+  guatemala-volcano_00000000_post_disaster.png: 1024x1024, mode=RGB
+  guatemala-volcano_00000000_pre_disaster.png: 1024x1024, mode=RGB
+  guatemala-volcano_00000001_post_disaster.png: 1024x1024, mode=RGB
+  guatemala-volcano_00000001_pre_disaster.png: 1024x1024, mode=RGB
+  guatemala-volcano_00000002_post_disaster.png: 1024x1024, mode=RGB
+
+--- Pairing Check ---
+Complete pairs:       2799
+Missing post images:  0
+Missing pre images:   0
+
+--- Label Coverage ---
+Samples with pre labels:  2799
+Samples with post labels: 2799
+Images without any label: 0
+
+--- Target Coverage ---
+Samples with targets: 2799
+Missing targets:      0
+
+--- Summary ---
+Total disaster events:    10
+Total image pairs:        2799
+Total image files:        5598
+Total label files:        5598
+Total target files:       5598
+Image format:             PNG
+Label format:             JSON (WKT polygons)
+Status:                   Raw dataset NOT modified

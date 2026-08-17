@@ -1,0 +1,22 @@
+xBD DATASET INTEGRITY REPORT
+============================================================
+
+Total samples:            2799
+Valid samples:            2760
+Valid with warnings:      39
+Invalid samples:          0
+
+Missing pre-images:       0
+Missing post-images:      0
+Corrupted images:         0
+Missing pre-labels:       0
+Missing post-labels:      0
+Invalid JSON:             40
+
+Total buildings found:    162787
+
+Damage distribution (from post-disaster labels):
+  destroyed               13227
+  major-damage            14161
+  minor-damage            14980
+  no-damage              117426
