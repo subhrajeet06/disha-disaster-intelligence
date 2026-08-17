@@ -16,7 +16,7 @@ const CARDS: Array<{
   icon: typeof Building2
   label: string
   accent: string
-   value: (k: { buildingsAffected: number; roadsBlocked: number; servicesAtRisk: number; populationAffected: number }) => string
+  value: (k: { buildingsAffected: number; roadsBlocked: number; servicesAtRisk: number; populationAffected: number }) => string
 }> = [
   {
     key: 'damage',
@@ -88,7 +88,7 @@ export function TopBar() {
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={toggleTheme}
             aria-label="Toggle dark mode"
@@ -104,7 +104,7 @@ export function TopBar() {
       </div>
 
       {activePage === 'command' && (
-        <div className="flex gap-3 overflow-x-auto no-scrollbar">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {CARDS.map((c) => {
             const clickable = c.key === 'damage' || c.key === 'roads' || c.key === 'services'
             const active = kpiFilter === c.key
@@ -113,7 +113,7 @@ export function TopBar() {
                 key={c.key}
                 disabled={!clickable}
                 onClick={() => setKpiFilter(active ? null : (c.key as FilterKey))}
-                className={`group shrink-0 flex items-center gap-3 rounded-[28px] px-4 sm:px-5 py-2 min-w-[130px] border text-left transition-all duration-200 ${
+                className={`group w-full flex items-center gap-3 rounded-[28px] px-4 sm:px-5 py-2 border text-left transition-all duration-200 ${
                   active
                     ? 'border-primary bg-primary text-white shadow-lg shadow-[#13735f]/20'
                     : 'border-edge bg-panel hover:border-primary/40'
@@ -128,17 +128,17 @@ export function TopBar() {
                 >
                   <c.icon className="w-[16px] h-[16px]" />
                 </span>
-                <span className="leading-none">
+                <span className="leading-none min-w-0">
                   <span className={`block text-xl font-extrabold tabular-nums ${active ? 'text-white' : 'text-ink'}`}>
                     {c.value(k)}
                   </span>
-                  <span className={`block mt-1 text-[11px] font-semibold ${active ? 'text-white/75' : 'text-ink-soft'}`}>
+                  <span className={`block mt-1 text-[11px] font-semibold truncate ${active ? 'text-white/75' : 'text-ink-soft'}`}>
                     {c.label}
                   </span>
                 </span>
                 {clickable && (
                   <span
-                    className={`ml-auto rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                    className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${
                       active ? 'bg-white/20 text-white' : 'bg-panel-tint text-primary'
                     }`}
                   >
