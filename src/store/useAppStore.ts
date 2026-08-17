@@ -87,7 +87,7 @@ export const useAppStore = create<AppState>((set) => ({
   toasts: [],
   drawerOpen: false,
   mobileSheetOpen: false,
-  sidebarCollapsed: false,
+  sidebarCollapsed: true,
   kpiFilter: null,
   fieldReports: [],
   reportModalOpen: false,

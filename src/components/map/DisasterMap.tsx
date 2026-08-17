@@ -283,6 +283,7 @@ export function DisasterMap() {
   const theme = useAppStore((s) => s.theme)
   const locations = useMapLocations()
   const selectedId = useAppStore((s) => s.selectedLocationId)
+  const drawerOpen = useAppStore((s) => s.drawerOpen)
   const openDrawer = useAppStore((s) => s.openDrawer)
   const selectLocation = useAppStore((s) => s.selectLocation)
   const fieldReports = useAppStore((s) => s.fieldReports)
@@ -396,7 +397,12 @@ export function DisasterMap() {
       popupRef.current.remove()
       popupRef.current = null
     }
-    if (selected) {
+    if (selected && !drawerOpen) {
+      const onClose = () => {
+        /* A map click can close the popup right after a marker click opened the
+           drawer; don't clear the selection while the drawer is showing it. */
+        if (!useAppStore.getState().drawerOpen) selectLocation(null)
+      }
       const popup = new maplibregl.Popup({ offset: 30, closeButton: true, maxWidth: '240px' })
         .setLngLat([selected.lng, selected.lat])
         .setHTML(
@@ -407,16 +413,38 @@ export function DisasterMap() {
           </div>`,
         )
       popup.on('open', () => selectLocation(selected.id))
-      popup.on('close', () => selectLocation(null))
+      popup.on('close', onClose)
       popup.addTo(map)
       popupRef.current = popup
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected?.id])
+  }, [selected?.id, drawerOpen])
 
   function buildMarkers() {
     const map = mapRef.current
     if (!map) return
+
+    markersRef.current
+      .filter((m) => (m.getElement() as HTMLElement).dataset.kind === 'impact')
+      .forEach((m) => m.remove())
+    markersRef.current = markersRef.current.filter(
+      (m) => (m.getElement() as HTMLElement).dataset.kind !== 'impact',
+    )
+    locations
+      .filter((l) => !l.isFieldReport)
+      .forEach((l) => {
+        const el = document.createElement('div')
+        el.dataset.kind = 'impact'
+        el.style.cssText = 'cursor:pointer;filter:drop-shadow(0 0 2px rgba(0,0,0,0.15))'
+        el.setAttribute('aria-label', `Show details for ${l.name}`)
+        el.innerHTML = `<img src="${impactCircleSvg(sevHex(l.damageLevel))}" width="110" height="110" style="transform:translate(-50%,-50%) scale(${l.damageLevel === 'critical' || l.damageLevel === 'severe' ? 1 : 0.75})"/>`
+        el.addEventListener('click', () => openDrawer(l.id))
+        const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+          .setLngLat([l.lng, l.lat])
+          .addTo(map)
+        markersRef.current.push(m)
+      })
+
     markersRef.current
       .filter((m) => (m.getElement() as HTMLElement).dataset.kind === 'loc')
       .forEach((m) => m.remove())
@@ -444,25 +472,6 @@ export function DisasterMap() {
         .addTo(map)
       markersRef.current.push(marker)
     })
-
-    markersRef.current
-      .filter((m) => (m.getElement() as HTMLElement).dataset.kind === 'impact')
-      .forEach((m) => m.remove())
-    markersRef.current = markersRef.current.filter(
-      (m) => (m.getElement() as HTMLElement).dataset.kind !== 'impact',
-    )
-    locations
-      .filter((l) => !l.isFieldReport)
-      .forEach((l) => {
-        const el = document.createElement('div')
-        el.dataset.kind = 'impact'
-        el.style.cssText = 'pointer-events:none;filter:drop-shadow(0 0 2px rgba(0,0,0,0.15))'
-        el.innerHTML = `<img src="${impactCircleSvg(sevHex(l.damageLevel))}" width="110" height="110" style="transform:translate(-50%,-50%) scale(${l.damageLevel === 'critical' || l.damageLevel === 'severe' ? 1 : 0.75})"/>`
-        const m = new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([l.lng, l.lat])
-          .addTo(map)
-        markersRef.current.push(m)
-      })
   }
 
   return (
