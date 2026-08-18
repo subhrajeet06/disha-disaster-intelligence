@@ -335,7 +335,7 @@ export function ImageryPage() {
                        <button
                          key={scenario.id}
                          onClick={() => {
-                           useAppStore.getState().setActiveEventId(scenario.id)
+                           useAppStore.getState().setActiveEvent(scenario.id)
                            setIsScenarioDropdownOpen(false)
                          }}
                          className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100 rounded-[12px] transition-colors duration-200"
