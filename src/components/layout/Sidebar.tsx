@@ -1,4 +1,5 @@
 import { Activity, ChevronDown, Layers, Map, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera } from 'lucide-react'
+import { useState } from 'react'
 import { useAppStore, type PageKey } from '../../store/useAppStore'
 import type { DisasterEvent } from '../../types'
 
@@ -27,6 +28,16 @@ export function EventIcon({ type }: { type: DisasterEvent['type'] }) {
   }
 }
 
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false);
+  
+  if (hasError) {
+    return <div className="text-red-500 p-4">Something went wrong in the sidebar.</div>;
+  }
+  
+  return <>{children}</>;
+}
+
 export function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
   const activeEventId = useAppStore((s) => s.activeEventId)
@@ -37,6 +48,10 @@ export function Sidebar() {
   const auditLog = useAppStore((s) => s.auditLog)
   const activePage = useAppStore((s) => s.activePage)
   const setActivePage = useAppStore((s) => s.setActivePage)
+  const [isLiveAuditExpanded, setIsLiveAuditExpanded] = useState<boolean>(false)
+
+  // Debugging log
+  console.log('Sidebar rendered. Audit log:', auditLog);
 
   return (
     <aside
@@ -175,37 +190,47 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Audit trail */}
-      {!collapsed && (
-        <div className="px-6 pb-5 pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Live audit</p>
-            <button
-              onClick={() => setActivePage('audit')}
-              className="text-[10px] font-bold text-[#9ad4c1] hover:text-white transition-colors duration-200"
-            >
-              View all
-            </button>
-          </div>
-          <div className="space-y-2.5">
-            {auditLog.slice(0, 4).map((a) => (
-              <div key={a.id} className="flex items-start gap-2.5">
-                <span
-                  className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${
-                    a.actor === 'System' ? 'bg-[#e9b949]' : 'bg-[#7fd0b8]'
-                  }`}
-                />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-white/85 leading-snug truncate">{a.action}</p>
-                  <p className="text-[10px] text-white/45">
-                    {a.target} · {a.time}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+       {/* Audit trail */}
+       {!collapsed && (
+         <div className="px-6 pb-5 pt-4">
+           <div className="flex items-center justify-between mb-3">
+             <button
+               onClick={() => setIsLiveAuditExpanded(!isLiveAuditExpanded)}
+               className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors duration-200"
+             >
+               Live audit
+               <ChevronDown className={`w-3 h-3 transform transition-transform duration-200 ${isLiveAuditExpanded ? 'rotate-180' : ''}`} />
+             </button>
+             {isLiveAuditExpanded && (
+               <button
+                 onClick={() => setActivePage('audit')}
+                 className="text-[10px] font-bold text-[#9ad4c1] hover:text-white transition-colors duration-200"
+               >
+                 View all
+               </button>
+             )}
+           </div>
+             {isLiveAuditExpanded && (
+             <div className="space-y-2.5">
+               {auditLog.slice(0, 4).map((a) => (
+                 <div key={a.id} className="flex items-start gap-2.5">
+                   <span
+                     className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 $
+                       a.actor === 'System' ? 'bg-[#e9b949]' : 'bg-[#7fd0b8]'
+                     `}
+                   />
+                   <div className="min-w-0">
+                     <p className="text-[11px] font-semibold text-white/85 leading-snug truncate">{a.action}</p>
+                     <p className="text-[10px] text-white/45">
+                       {a.target} · {a.time}
+                     </p>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           )}
+         </div>
+       )}
     </aside>
   )
 }

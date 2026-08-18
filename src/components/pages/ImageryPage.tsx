@@ -13,6 +13,8 @@ import {
   Building,
   Route,
   ArrowRight,
+  ChevronDown,
+  Check,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { ScoreRing, StatusPill, SeverityPill } from '../ui'
@@ -45,6 +47,7 @@ export function ImageryPage() {
   const activeEventId = useAppStore((s) => s.activeEventId)
   const setActivePage = useAppStore((s) => s.setActivePage)
   const activeScenario = scenarios.find((e) => e.id === activeEventId) ?? scenarios[0]
+  const [isScenarioDropdownOpen, setIsScenarioDropdownOpen] = useState<boolean>(false)
 
   const [selectedSource, setSelectedSource] = useState<SourceType | 'all'>('all')
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
@@ -315,12 +318,38 @@ export function ImageryPage() {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                Multimodal Imagery Workspace
-              </h2>
-              <p className="text-sm text-white/70 mt-1 max-w-xl leading-relaxed">
-                Ingest drone orthomosaics, satellite passes, and ground-level street imagery for {activeScenario?.name ?? 'the active scenario'}.
-              </p>
+               <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                 Multimodal Imagery Workspace
+               </h2>
+               <div className="mt-2">
+                 <button
+                   onClick={() => setIsScenarioDropdownOpen(!isScenarioDropdownOpen)}
+                   className="inline-flex items-center gap-1.5 bg-white/20 text-white font-bold text-sm px-3 py-1.5 rounded-full hover:bg-white/30 transition-colors duration-200"
+                 >
+                   {activeScenario?.name ?? 'Select Scenario'}
+                   <ChevronDown className="w-4 h-4" />
+                 </button>
+                 {isScenarioDropdownOpen && (
+                   <div className="mt-2 absolute z-10 bg-white rounded-[16px] shadow-lg border border-gray-200 w-64 p-2">
+                     {scenarios.map((scenario) => (
+                       <button
+                         key={scenario.id}
+                         onClick={() => {
+                           useAppStore.getState().setActiveEventId(scenario.id)
+                           setIsScenarioDropdownOpen(false)
+                         }}
+                         className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100 rounded-[12px] transition-colors duration-200"
+                       >
+                         {scenario.id === activeEventId && <Check className="w-4 h-4 text-primary" />}
+                         <span className={scenario.id === activeEventId ? 'font-bold text-primary' : ''}>{scenario.name}</span>
+                       </button>
+                     ))}
+                   </div>
+                 )}
+               </div>
+               <p className="text-sm text-white/70 mt-2 max-w-xl leading-relaxed">
+                 Ingest drone orthomosaics, satellite passes, and ground-level street imagery for the selected scenario.
+               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
