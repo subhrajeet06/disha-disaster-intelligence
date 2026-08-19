@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import {
   Warehouse,
   Upload,
@@ -19,6 +19,7 @@ import {
 import { useAppStore } from '../../store/useAppStore'
 import { ScoreRing, StatusPill, SeverityPill } from '../ui'
 import type { SourceType, Severity } from '../../types'
+import { PageFooter } from '../layout/PageFooter'
 
 type AnalysisState = 'idle' | 'queued' | 'processing' | 'ready'
 
@@ -60,46 +61,103 @@ export function ImageryPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Demo static images extracted from scenarios & priorities
+  // Demo static images categorized by scenario ID
   const demoImages: DemoImageItem[] = useMemo(() => {
+    if (activeEventId === 'evt-flood-mahanadi') {
+      return [
+        {
+          id: 'demo-mh-1',
+          title: 'Cuttack – Mahanadi River Surge Ortho',
+          sourceType: 'drone',
+          locationName: 'Cuttack–Chandni Junction',
+          region: 'Cuttack – Banki',
+          scenarioName: activeScenario?.name ?? 'Mahanadi Flood Surge',
+          captureTime: '2026-07-28 23:15 IST (T+1h)',
+          fileType: 'GeoTIFF / Thermal RGB',
+          resolution: '3.8 cm/px (GSD)',
+          image: '/evidence/odisha_hadr_aerial.jpg',
+          description: 'High-altitude aerial survey over Mahanadi river bank depicting bank overflow, embankment breach, and submerged arterial roads (Source: Indian Air Force HADR aerial pass).',
+          detectedStructures: 92,
+          roadSignals: 'Ring Road embankment partially eroded; 1 lane closed',
+          damageSeverity: 'severe',
+          confidence: 0.94,
+          aiModel: 'yolo-v9-flood · r2026.07',
+          notes: 'Water depth rising rapidly around Cuttack hospital corridor. Priority #1 for Mahanadi scenario.',
+        },
+        {
+          id: 'demo-mh-2',
+          title: 'Banki PHC Inundation Radar Pass',
+          sourceType: 'satellite',
+          locationName: 'Banki CHC',
+          region: 'Cuttack – Banki',
+          scenarioName: activeScenario?.name ?? 'Mahanadi Flood Surge',
+          captureTime: '2026-07-28 22:40 IST (T+30m)',
+          fileType: 'SAR Sentinel-1 (C-Band)',
+          resolution: '10.0 m/px (VV/VH)',
+          image: '/evidence/modis_cyclone_mocha.jpg',
+          description: 'Synthetic Aperture Radar satellite pass capturing complete flood extent over Banki CHC surrounding agricultural fields (Source: NASA EOSDIS / MODIS).',
+          detectedStructures: 43,
+          roadSignals: 'Banki–Athagarh State Highway inundated (Impassable)',
+          damageSeverity: 'critical',
+          confidence: 0.91,
+          aiModel: 'segment-anything-flood-v2',
+          notes: 'Creek overflow isolates PHC corridor; medical transport requiring amphibious boats.',
+        },
+        {
+          id: 'demo-mh-3',
+          title: 'Cuttack Ground Rescue Operation Camera',
+          sourceType: 'street',
+          locationName: 'Naraj Health Centre',
+          region: 'Cuttack – Banki',
+          scenarioName: activeScenario?.name ?? 'Mahanadi Flood Surge',
+          captureTime: '2026-07-29 01:10 IST (T+3h)',
+          fileType: 'JPEG (NDRF Dashcam)',
+          resolution: '1920 x 1080 px (Ground-level)',
+          image: '/evidence/ndrf_rescue_boat.jpg',
+          description: 'Ground responder image showing NDRF motorboat evacuation operations along waterlogged village approach road (Source: NDRF flood operations team).',
+          detectedStructures: 28,
+          roadSignals: 'Village access road submerged under 1.2m water',
+          damageSeverity: 'moderate',
+          confidence: 0.88,
+          aiModel: 'yolo-v8-road-debris',
+          notes: 'Ground unit confirms boats are successfully transferring patients across flooded section.',
+        },
+        {
+          id: 'demo-mh-4',
+          title: 'Athagarh Agricultural Sector Survey',
+          sourceType: 'drone',
+          locationName: 'Athagarh PHC',
+          region: 'Cuttack – Banki',
+          scenarioName: activeScenario?.name ?? 'Mahanadi Flood Surge',
+          captureTime: '2026-07-29 02:00 IST (T+4h)',
+          fileType: 'GeoTIFF / Orthomosaic',
+          resolution: '4.5 cm/px (GSD)',
+          image: '/evidence/odisha_villagers_flood_ground.jpg',
+          description: 'Low-altitude drone footage covering marooned hamlet and damaged livestock shelters (Source: Odisha Disaster Management Authority survey drone).',
+          detectedStructures: 35,
+          roadSignals: 'Local feeder road washed out',
+          damageSeverity: 'moderate',
+          confidence: 0.89,
+          aiModel: 'yolo-v9-damage · r2026.07',
+          notes: 'Relief distribution point established at Athagarh high ground.',
+        },
+      ]
+    }
+
+    // Default: Cyclone Fani
     return [
       {
-        id: 'demo-1',
+        id: 'demo-fn-1',
         title: 'Paradeep Jetty Approach Grid',
         sourceType: 'drone',
         locationName: 'Paradeep Port Area',
         region: 'Coastal Odisha',
-        scenarioName: activeScenario?.name ?? 'Cyclone Nivar',
+        scenarioName: activeScenario?.name ?? 'Cyclone Fani',
         captureTime: '2026-08-14 07:15 IST (T+45m)',
         fileType: 'GeoTIFF / RGB',
         resolution: '4.2 cm/px (GSD)',
-        image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-          <svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'>
-            <defs>
-              <radialGradient id='dg1' cx='50%' cy='45%' r='75%'>
-                <stop offset='0%' stop-color='#3b8270'/>
-                <stop offset='55%' stop-color='#265b4e'/>
-                <stop offset='100%' stop-color='#153830'/>
-              </radialGradient>
-            </defs>
-            <rect width='640' height='400' fill='url(#dg1)'/>
-            <!-- Damaged structures boxes -->
-            <rect x='110' y='80' width='90' height='60' fill='none' stroke='#c0392b' stroke-width='2.5' stroke-dasharray='4 2'/>
-            <text x='115' y='74' fill='#ff7675' font-size='11' font-family='sans-serif' font-weight='bold'>ROOF COLLAPSE #104 [0.97]</text>
-            <rect x='240' y='140' width='130' height='90' fill='none' stroke='#c0392b' stroke-width='2.5'/>
-            <text x='245' y='134' fill='#ff7675' font-size='11' font-family='sans-serif' font-weight='bold'>STRUCTURAL BREACH [0.98]</text>
-            <!-- Flooded road path -->
-            <path d='M0 320 Q 200 280 400 330 T 640 260' stroke='#38bdf8' stroke-width='16' fill='none' stroke-opacity='0.75'/>
-            <path d='M0 320 Q 200 280 400 330 T 640 260' stroke='#f43f5e' stroke-width='2' stroke-dasharray='6 4' fill='none'/>
-            <text x='30' y='305' fill='#fecdd3' font-size='11' font-family='sans-serif' font-weight='bold'>NH-53A FLOOD EXTENT (BLOCKED)</text>
-            <!-- Drone overlay HUD -->
-            <circle cx='320' cy='200' r='40' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none'/>
-            <line x1='320' y1='150' x2='320' y2='250' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>
-            <line x1='270' y1='200' x2='370' y2='200' stroke='rgba(255,255,255,0.4)' stroke-width='1.5'/>
-            <text x='20' y='30' fill='#a7f3d0' font-size='12' font-family='monospace' font-weight='bold'>DRONE-UAV 04 · ALT 120M · SENSOR 4K-OPTICAL</text>
-          </svg>
-        `)}`,
-        description: 'Ultra-high-resolution aerial pass showing concentrated roof collapse polygons across jetty approach and industrial shoreline.',
+        image: '/evidence/balasore_flood_aerial.jpg',
+        description: 'Ultra-high-resolution aerial pass showing concentrated roof collapse and inundation along the coastal settlement grid (Source: Balasore aerial survey / Govt of Odisha).',
         detectedStructures: 118,
         roadSignals: 'NH-53A Submerged (2 impassable segments)',
         damageSeverity: 'critical',
@@ -108,37 +166,17 @@ export function ImageryPage() {
         notes: 'Dense cluster of masonry breaches. Corroborates field priority #1 Paradeep Port Area.',
       },
       {
-        id: 'demo-2',
+        id: 'demo-fn-2',
         title: 'Ersama Settlement Inundation Footprint',
         sourceType: 'satellite',
         locationName: 'Ersama Block Centre',
         region: 'Jagatsinghpur, Odisha',
-        scenarioName: activeScenario?.name ?? 'Cyclone Nivar',
+        scenarioName: activeScenario?.name ?? 'Cyclone Fani',
         captureTime: '2026-08-14 06:10 IST (T-20m)',
         fileType: 'Multispectral GeoTIFF (Sentinel-2)',
         resolution: '10.0 m/px (SWIR/NDWI)',
-        image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-          <svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'>
-            <defs>
-              <linearGradient id='sg1' x1='0' y1='0' x2='1' y2='1'>
-                <stop offset='0%' stop-color='#1b4965'/>
-                <stop offset='40%' stop-color='#2b6f7a'/>
-                <stop offset='100%' stop-color='#133c3a'/>
-              </linearGradient>
-            </defs>
-            <rect width='640' height='400' fill='url(#sg1)'/>
-            <!-- NDWI Water boundary -->
-            <polygon points='80,120 220,90 380,180 520,160 600,280 410,360 190,320 60,240' fill='rgba(14,165,233,0.35)' stroke='#38bdf8' stroke-width='2'/>
-            <text x='170' y='210' fill='#e0f2fe' font-size='12' font-family='sans-serif' font-weight='bold'>FLOOD EXTENT POLYGON [NDWI \u003e 0.38]</text>
-            <!-- Settlement cluster -->
-            <circle cx='320' cy='180' r='18' fill='#e2622b' fill-opacity='0.8' stroke='#fff' stroke-width='1.5'/>
-            <circle cx='350' cy='200' r='12' fill='#e2622b' fill-opacity='0.8' stroke='#fff' stroke-width='1.5'/>
-            <circle cx='290' cy='210' r='14' fill='#e2622b' fill-opacity='0.8' stroke='#fff' stroke-width='1.5'/>
-            <text x='350' y='180' fill='#fef08a' font-size='10' font-family='sans-serif' font-weight='bold'>ERSAMA CHC (ISOLATED)</text>
-            <text x='20' y='30' fill='#93c5fd' font-size='12' font-family='monospace' font-weight='bold'>SENTINEL-2 MSI · BAND 8A/11/4 · COMPOSITE NDWI</text>
-          </svg>
-        `)}`,
-        description: 'Multi-spectral satellite water-index composite indicating 61 buildings inside waterlogged boundary.',
+        image: '/evidence/sentinel2_flood_satellite.jpg',
+        description: 'Multi-spectral satellite water-index composite indicating 61 buildings inside waterlogged boundary (Source: Copernicus Sentinel-2 MSI).',
         detectedStructures: 74,
         roadSignals: 'Connecting Link Road Submerged (Uncertain Access)',
         damageSeverity: 'severe',
@@ -147,36 +185,17 @@ export function ImageryPage() {
         notes: 'Water depth index rising around Ersama CHC. Corroborates priority #2.',
       },
       {
-        id: 'demo-3',
+        id: 'demo-fn-3',
         title: 'Puri Sea Front Debris Field',
         sourceType: 'street',
         locationName: 'Puri Sea Front',
         region: 'Puri, Odisha',
-        scenarioName: activeScenario?.name ?? 'Cyclone Nivar',
+        scenarioName: activeScenario?.name ?? 'Cyclone Fani',
         captureTime: '2026-08-14 08:30 IST (T+2h)',
         fileType: 'JPEG (Field Camera)',
         resolution: '1920 x 1080 px (Ground-level)',
-        image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-          <svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'>
-            <defs>
-              <linearGradient id='stg1' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='0%' stop-color='#64748b'/>
-                <stop offset='45%' stop-color='#94a3b8'/>
-                <stop offset='100%' stop-color='#334155'/>
-              </linearGradient>
-            </defs>
-            <rect width='640' height='400' fill='url(#stg1)'/>
-            <!-- Road surface -->
-            <polygon points='0,400 640,400 480,220 160,220' fill='#1e293b'/>
-            <!-- Obstructions -->
-            <rect x='210' y='250' width='80' height='45' fill='#991b1b' stroke='#f87171' stroke-width='2'/>
-            <text x='215' y='244' fill='#fca5a5' font-size='10' font-family='sans-serif' font-weight='bold'>DOWNED TREE / POLE</text>
-            <rect x='340' y='270' width='95' height='55' fill='#713f12' stroke='#facc15' stroke-width='2'/>
-            <text x='345' y='264' fill='#fef08a' font-size='10' font-family='sans-serif' font-weight='bold'>DEBRIS OBSTRUCTION</text>
-            <text x='20' y='30' fill='#f1f5f9' font-size='12' font-family='monospace' font-weight='bold'>RESPONDER DASHCAM · PURI MARINE DRIVE · STREET CAM 08</text>
-          </svg>
-        `)}`,
-        description: 'First-responder ground verification photo showing treefall, sign debris, and narrow passable lane on Marine Drive.',
+        image: '/evidence/fani_ground_damage.jpg',
+        description: 'First-responder ground verification photo showing treefall, sign debris, and structural damage along coastal corridor (Source: Wikimedia / Bikash Ojha).',
         detectedStructures: 41,
         roadSignals: 'Marine Drive partially blocked; 1 lane open',
         damageSeverity: 'moderate',
@@ -185,34 +204,17 @@ export function ImageryPage() {
         notes: 'Ground camera confirms hospital corridor is cleared, verifying priority #4.',
       },
       {
-        id: 'demo-4',
+        id: 'demo-fn-4',
         title: 'Kujanga Coastal Hamlet Pass',
         sourceType: 'drone',
         locationName: 'Kujanga',
         region: 'Jagatsinghpur, Odisha',
-        scenarioName: activeScenario?.name ?? 'Cyclone Nivar',
+        scenarioName: activeScenario?.name ?? 'Cyclone Fani',
         captureTime: '2026-08-14 07:45 IST (T+1h)',
         fileType: 'GeoTIFF / Orthomosaic',
         resolution: '5.0 cm/px (GSD)',
-        image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-          <svg xmlns='http://www.w3.org/2000/svg' width='640' height='400'>
-            <defs>
-              <radialGradient id='dg2' cx='40%' cy='40%' r='70%'>
-                <stop offset='0%' stop-color='#2d6a4f'/>
-                <stop offset='60%' stop-color='#1b4332'/>
-                <stop offset='100%' stop-color='#081c15'/>
-              </radialGradient>
-            </defs>
-            <rect width='640' height='400' fill='url(#dg2)'/>
-            <!-- Detected clusters -->
-            <rect x='160' y='90' width='80' height='55' fill='none' stroke='#e2622b' stroke-width='2'/>
-            <rect x='280' y='110' width='70' height='45' fill='none' stroke='#e2622b' stroke-width='2'/>
-            <rect x='410' y='150' width='90' height='60' fill='none' stroke='#c0392b' stroke-width='2.5'/>
-            <text x='160' y='82' fill='#fdba74' font-size='10' font-family='sans-serif' font-weight='bold'>55 DAMAGE DETECTIONS</text>
-            <text x='20' y='30' fill='#a7f3d0' font-size='12' font-family='monospace' font-weight='bold'>DRONE ORTHO · KUJANGA COASTAL SECTOR · ALT 100M</text>
-          </svg>
-        `)}`,
-        description: 'Drone orthomosaic covering fishing hamlet with 55 severe damaged roof detections and flooded canal bridge.',
+        image: '/evidence/chennai_iaf_aerial.jpg',
+        description: 'Aerial disaster orthomosaic covering inundated hamlet with 55 severe damaged roof detections and flooded canal bridge (Source: Indian Air Force aerial disaster survey).',
         detectedStructures: 58,
         roadSignals: 'CS Coastal Road Flooded (Impassable)',
         damageSeverity: 'severe',
@@ -221,13 +223,22 @@ export function ImageryPage() {
         notes: 'Isolated coastal community requiring boat intervention. Corresponds to priority #3.',
       },
     ]
-  }, [activeScenario])
+  }, [activeEventId, activeScenario])
 
-  // Filtered list
+  // Filtered list by source
   const visibleImages = useMemo(() => {
     if (selectedSource === 'all') return demoImages
     return demoImages.filter((img) => img.sourceType === selectedSource)
   }, [demoImages, selectedSource])
+
+  // Synchronize selection when scenario or source filter changes
+  useEffect(() => {
+    if (selectedImageId === 'uploaded') return
+    const isValid = visibleImages.some((img) => img.id === selectedImageId)
+    if (!isValid && visibleImages.length > 0) {
+      setSelectedImageId(visibleImages[0].id)
+    }
+  }, [visibleImages, selectedImageId])
 
   // Current active image item (uploaded or demo)
   const currentImage = useMemo(() => {
@@ -252,8 +263,8 @@ export function ImageryPage() {
         notes: 'Custom ingest metadata and simulated vision inferences generated locally.',
       }
     }
-    return demoImages.find((img) => img.id === selectedImageId) ?? demoImages[0]
-  }, [uploadedImage, selectedImageId, uploadedFileName, uploadedFileType, uploadedDimensions, activeScenario, demoImages])
+    return visibleImages.find((img) => img.id === selectedImageId) ?? visibleImages[0] ?? demoImages[0]
+  }, [uploadedImage, selectedImageId, uploadedFileName, uploadedFileType, uploadedDimensions, activeScenario, visibleImages, demoImages])
 
   // Simulated analysis flow
   const runAnalysis = () => {
@@ -655,6 +666,8 @@ export function ImageryPage() {
             </div>
           </div>
         </div>
+
+        <PageFooter />
       </div>
     </div>
   )

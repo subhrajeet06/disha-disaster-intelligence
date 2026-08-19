@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { AuditEntry, DataLayerKey, DisasterEvent, FilterKey, KpiSummary, PriorityLocation, RouteInfo, Toast, VerificationStatus } from '../types'
 import { AUDIT_LOG, DISASTER_EVENTS, PRIORITIES } from '../data/mock'
+import { recalculateVerifiedLocation } from '../lib/scoring'
 
 export type VerificationAction = 'confirmed' | 'rejected' | 'uncertain' | 'corrected'
 
@@ -11,6 +12,7 @@ export interface LocationState {
   status: VerificationStatus
   aiStatus: VerificationStatus
   score: number
+  factors?: Record<import('../types').FactorKey, number>
   roadStatus?: PriorityLocation['roadStatus']
   roadLabel?: string
 }
@@ -37,12 +39,16 @@ interface AppState {
   routeError: string | null
   highlightId: string | null
   focusRequest: { key: number; lat: number; lng: number } | null
+  inspectionPlan: import('../types').InspectionRoutePlan | null
+  inspectionPlanningOpen: boolean
 
   setActivePage: (p: PageKey) => void
   addScenario: (input: { name: string; type: DisasterEvent['type']; region: string }) => void
   simulateUpload: (eventId: string) => void
   setActiveEvent: (id: string) => void
   selectLocation: (id: string | null) => void
+  setInspectionPlanningOpen: (open: boolean) => void
+  setInspectionPlan: (plan: import('../types').InspectionRoutePlan | null) => void
   openDrawer: (id: string) => void
   closeDrawer: () => void
   setMobileSheet: (open: boolean) => void
@@ -81,7 +87,7 @@ function initialTheme(): ThemeMode {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  activeEventId: 'evt-cyclone-nivar',
+  activeEventId: 'evt-cyclone-fani',
   activePage: 'command',
   scenarios: DISASTER_EVENTS,
   selectedLocationId: null,
@@ -102,8 +108,12 @@ export const useAppStore = create<AppState>((set) => ({
   routeError: null,
   highlightId: null,
   focusRequest: null,
+  inspectionPlan: null,
+  inspectionPlanningOpen: false,
 
   setActivePage: (p) => set({ activePage: p, mobileSheetOpen: false }),
+  setInspectionPlanningOpen: (open) => set({ inspectionPlanningOpen: open }),
+  setInspectionPlan: (plan) => set({ inspectionPlan: plan }),
 
   addScenario: ({ name, type, region }) =>
     set((s) => {
@@ -289,24 +299,74 @@ export const useAppStore = create<AppState>((set) => ({
       }
       const now = new Date().toTimeString().slice(0, 5)
 
+      const targetRoadStatus = meta?.correctedRoad ?? prev.roadStatus ?? base?.roadStatus
+      const effectiveBase: PriorityLocation = base ?? {
+        id,
+        scenarioId: s.activeEventId,
+        rank: 1,
+        name: 'Location',
+        sub: '',
+        type: 'settlement',
+        lat: 0,
+        lng: 0,
+        score: prev.score,
+        factors: prev.factors ?? { damage: 50, population: 50, vulnerability: 50, access: 50, service: 50, confidence: 50 },
+        damageLevel: 'moderate',
+        roadStatus: targetRoadStatus ?? 'blocked',
+        affectedPopulation: 0,
+        buildingsAffected: 0,
+        nearbyFacilities: [],
+        nearestFacility: '',
+        serviceRisk: 'moderate',
+        detections: 0,
+        status: 'pending',
+        aiConfidence: 0.9,
+        evidence: [],
+        note: '',
+      }
+
+      const { factors: newFactors, score: newScore } = recalculateVerifiedLocation(
+        effectiveBase,
+        action,
+        targetRoadStatus,
+      )
+
       let next: LocationState
       let toast: Omit<Toast, 'id'>
       let audit: AuditEntry
 
       switch (action) {
         case 'confirmed':
-          next = { ...prev, status: 'confirmed', score: Math.min(100, Math.round(prev.score + 1)) }
-          toast = { tone: 'success', title: 'Finding confirmed', detail: `${base?.name} verified by you` }
+          next = {
+            ...prev,
+            status: 'confirmed',
+            aiStatus: prev.aiStatus ?? base?.status ?? 'pending',
+            score: newScore,
+            factors: newFactors,
+          }
+          toast = { tone: 'success', title: 'Finding confirmed', detail: `${base?.name} re-calculated to ${newScore}/100` }
           audit = { id: `au${Date.now()}`, time: now, actor: 'You', action: 'Confirmed AI finding', target: base?.name ?? id }
           break
         case 'rejected':
-          next = { ...prev, status: 'rejected', score: Math.max(0, Math.round(prev.score - 22)) }
-          toast = { tone: 'warn', title: 'Finding rejected', detail: `${base?.name} demoted in priority` }
+          next = {
+            ...prev,
+            status: 'rejected',
+            aiStatus: prev.aiStatus ?? base?.status ?? 'pending',
+            score: newScore,
+            factors: newFactors,
+          }
+          toast = { tone: 'warn', title: 'Finding rejected', detail: `${base?.name} demoted to ${newScore}/100` }
           audit = { id: `au${Date.now()}`, time: now, actor: 'You', action: 'Rejected AI finding', target: base?.name ?? id }
           break
         case 'uncertain':
-          next = { ...prev, status: 'uncertain', score: prev.score }
-          toast = { tone: 'info', title: 'Marked uncertain', detail: 'Field confirmation requested' }
+          next = {
+            ...prev,
+            status: 'uncertain',
+            aiStatus: prev.aiStatus ?? base?.status ?? 'pending',
+            score: newScore,
+            factors: newFactors,
+          }
+          toast = { tone: 'info', title: 'Marked uncertain', detail: `${base?.name} set to ${newScore}/100` }
           audit = { id: `au${Date.now()}`, time: now, actor: 'You', action: 'Marked uncertain', target: base?.name ?? id }
           break
         case 'corrected':
@@ -315,14 +375,16 @@ export const useAppStore = create<AppState>((set) => ({
             next = {
               ...prev,
               status: 'corrected',
+              aiStatus: prev.aiStatus ?? base?.status ?? 'pending',
               roadStatus: meta.correctedRoad,
               roadLabel: opened ? 'Corrected to open' : 'Corrected to blocked',
-              score: opened ? Math.min(100, prev.score + 9) : Math.max(0, prev.score - 14),
+              score: newScore,
+              factors: newFactors,
             }
             toast = {
               tone: 'success',
               title: opened ? 'Road corrected → open' : 'Road corrected → blocked',
-              detail: `${base?.name} re-scored to ${next.score}/100`,
+              detail: `${base?.name} re-scored to ${newScore}/100`,
             }
             audit = {
               id: `au${Date.now()}`,
@@ -332,8 +394,14 @@ export const useAppStore = create<AppState>((set) => ({
               target: base?.name ?? id,
             }
           } else {
-            next = { ...prev, status: 'corrected', score: prev.score }
-            toast = { tone: 'info', title: 'Correction stored', detail: 'Re-scored after review' }
+            next = {
+              ...prev,
+              status: 'corrected',
+              aiStatus: prev.aiStatus ?? base?.status ?? 'pending',
+              score: newScore,
+              factors: newFactors,
+            }
+            toast = { tone: 'info', title: 'Correction stored', detail: `${base?.name} re-scored to ${newScore}/100` }
             audit = { id: `au${Date.now()}`, time: now, actor: 'You', action: 'Corrected finding', target: base?.name ?? id }
           }
           break
@@ -344,7 +412,7 @@ export const useAppStore = create<AppState>((set) => ({
         time: now,
         actor: 'System',
         action: 'Priority recalculated',
-        target: 'Cyclone Nivar',
+        target: base?.name ?? id,
       }
 
       return {
@@ -366,6 +434,7 @@ export function getEffectiveLocation(p: PriorityLocation, overrides: Record<stri
     ...p,
     status: o.status,
     score: o.score,
+    factors: o.factors ?? p.factors,
     roadStatus: o.roadStatus ?? p.roadStatus,
   }
 }

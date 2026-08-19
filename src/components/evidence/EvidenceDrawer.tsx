@@ -2,10 +2,11 @@ import { useMemo } from 'react'
 import { X, Check, ThumbsDown, HelpCircle, MapPin, Users, Route, ShieldCheck, FileText, ImageIcon, ScanLine, Navigation, Loader2 } from 'lucide-react'
 import { useAppStore, type VerificationAction } from '../../store/useAppStore'
 import { useRankedLocations } from '../../store/useAppStore'
-import { FACILITIES, FACTOR_META, FACTOR_ORDER } from '../../data/mock'
+import { FACILITIES, FACTOR_META } from '../../data/mock'
 import { ScoreRing, FactorBar, SeverityPill, StatusPill } from '../ui'
 import { fmtInt, pct, roadLabel } from '../../lib/format'
 import { osrmRoute, fmtDistance, fmtDuration } from '../../lib/routing'
+import { explainPriorityScore, calculateServiceRiskExplanation } from '../../lib/scoring'
 import type { Evidence, PriorityLocation } from '../../types'
 
 function haversineKm(a: [number, number], b: [number, number]): number {
@@ -137,18 +138,64 @@ export function EvidenceDrawer() {
 
           {/* Factors */}
           <div className="px-6 py-5 border-b border-edge">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-ink-faint mb-4">Score factors</p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-ink-faint">Score factors & weighted contribution</p>
+              <span className="text-[10px] font-bold text-primary bg-panel-tint px-2 py-0.5 rounded-full">
+                Sum: {explainPriorityScore(loc.factors).totalScore}/100
+              </span>
+            </div>
             <div className="space-y-3.5">
-              {FACTOR_ORDER.map((k) => {
-                const m = FACTOR_META[k]
+              {explainPriorityScore(loc.factors).breakdown.map((item) => {
+                const m = FACTOR_META[item.factor]
                 return (
-                  <FactorBar key={k} label={m.label} value={loc.factors[k]} weight={m.weight} color={m.color} />
+                  <div key={item.factor} className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-semibold text-ink">
+                      <span>{m.label} ({m.weight}%)</span>
+                      <span className="text-ink-soft">
+                        Raw: {item.rawScore} → <strong className="text-primary">+{item.weightedContribution} pts</strong>
+                      </span>
+                    </div>
+                    <FactorBar label={m.label} value={item.rawScore} weight={m.weight} color={m.color} />
+                  </div>
                 )
               })}
             </div>
           </div>
 
-          {/* Quick stats */}
+          {/* Critical Service Accessibility Risk Card */}
+          {(() => {
+            const serviceEval = calculateServiceRiskExplanation(loc)
+            const riskTone =
+              serviceEval.riskLevel === 'High'
+                ? 'bg-red-500/10 text-red-600 border-red-200'
+                : serviceEval.riskLevel === 'Medium'
+                  ? 'bg-amber-500/10 text-amber-600 border-amber-200'
+                  : 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
+            return (
+              <div className="px-6 py-5 border-b border-edge bg-panel-soft/40">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-ink-faint">
+                    Critical Service Accessibility
+                  </p>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${riskTone}`}>
+                    {serviceEval.riskLevel} Risk
+                  </span>
+                </div>
+                <div className="rounded-[18px] bg-panel p-4 border border-edge space-y-2 text-xs">
+                  <div className="flex items-center justify-between text-ink font-bold">
+                    <span>Target Facility: {loc.nearestFacility}</span>
+                    <span className="text-[10px] text-ink-faint uppercase">{loc.type}</span>
+                  </div>
+                  <p className="text-ink-soft leading-relaxed">{serviceEval.explanation}</p>
+                  <div className="pt-2 border-t border-edge/60 space-y-1 text-[11px] text-ink-soft">
+                    <p>• <strong>Damage evidence:</strong> {serviceEval.nearbyDamageSummary}</p>
+                    <p>• <strong>Access road:</strong> {serviceEval.affectedRoadSummary}</p>
+                    <p>• <strong>Reachability:</strong> {serviceEval.reachabilitySummary}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
           <div className="grid grid-cols-3 gap-2.5 px-6 py-5 border-b border-edge">
             {[
               { label: 'Buildings affected', value: String(loc.buildingsAffected) },

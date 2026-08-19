@@ -292,6 +292,13 @@ export function DisasterMap() {
   const dataLayers = useAppStore((s) => s.dataLayers)
   const route = useAppStore((s) => s.route)
   const focusRequest = useAppStore((s) => s.focusRequest)
+  const inspectionPlan = useAppStore((s) => s.inspectionPlan)
+
+  const activeRouteData = useMemo(() => {
+    if (inspectionPlan?.routeGeojson) return { geojson: inspectionPlan.routeGeojson }
+    if (route?.geojson) return { geojson: route.geojson }
+    return null
+  }, [route, inspectionPlan])
 
   const [glSupported] = useState(() => webgl2Supported())
 
@@ -394,10 +401,9 @@ export function DisasterMap() {
   useEffect(() => {
     const map = mapRef.current
     if (!map || !map.isStyleLoaded()) return
-    applyOverlayState(map, locations, scenarioFieldReports, dataLayers, route)
-    buildMarkers()
+    applyOverlayState(map, locations, scenarioFieldReports, dataLayers, activeRouteData)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locations, scenarioFieldReports, dataLayers, route])
+  }, [locations, scenarioFieldReports, dataLayers, activeRouteData])
 
   /* Route endpoint marker */
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ShieldCheck, Search, Bot, UserRound, Check, ThumbsDown, HelpCircle, PenLine, Sparkles } from 'lucide-react'
 import { useAppStore, useRankedLocations } from '../../store/useAppStore'
+import { PageFooter } from '../layout/PageFooter'
 
 type ActorFilter = 'all' | 'system' | 'people'
 
@@ -157,6 +158,8 @@ export function AuditPage() {
             )}
           </div>
         </div>
+
+        <PageFooter />
       </div>
     </div>
   )
