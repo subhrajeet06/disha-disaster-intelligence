@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { DisasterEvent, KpiSummary, PriorityLocation } from '../types'
-import { DISASTER_EVENTS, KPI, PRIORITIES } from '../data/mock'
-import { rankLocations, useAppStore } from '../store/useAppStore'
+import { DISASTER_EVENTS, PRIORITIES } from '../data/mock'
+import { deriveKpi, rankLocations, useAppStore, useRankedLocations } from '../store/useAppStore'
 
 const LATENCY = 260
 
@@ -13,11 +13,12 @@ export const mockApi = {
   fetchEvents: (): Promise<DisasterEvent[]> => delay(DISASTER_EVENTS),
 
   fetchPriorities: (eventId: string): Promise<PriorityLocation[]> => {
-    const filtered = PRIORITIES.filter(() => eventId === 'evt-cyclone-nivar' || true)
+    const filtered = PRIORITIES.filter((p) => p.scenarioId === eventId)
     return delay(filtered)
   },
 
-  fetchKpi: (): Promise<KpiSummary> => delay(KPI),
+  fetchKpi: (eventId: string): Promise<KpiSummary> =>
+    delay(deriveKpi(PRIORITIES.filter((p) => p.scenarioId === eventId))),
 
   runInference: async (_imageId: string): Promise<{ jobId: string; status: string }> =>
     delay({ jobId: `job-${Date.now()}`, status: 'queued' }, 400),
@@ -38,6 +39,9 @@ export function usePriorities() {
   })
 }
 
-export function useKpi() {
-  return useQuery({ queryKey: ['kpi'], queryFn: mockApi.fetchKpi })
+/** KPIs for the active scenario, derived live from its ranked locations so the
+    numbers always match what is shown on the map and in the priority list. */
+export function useKpi(): { data: KpiSummary } {
+  const locations = useRankedLocations()
+  return { data: deriveKpi(locations) }
 }

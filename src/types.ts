@@ -32,6 +32,7 @@ export interface Evidence {
 
 export interface PriorityLocation {
   id: string
+  scenarioId: string
   rank: number
   name: string
   sub: string

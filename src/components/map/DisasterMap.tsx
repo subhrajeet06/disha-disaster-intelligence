@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import type { FeatureCollection } from 'geojson'
 import { useAppStore } from '../../store/useAppStore'
-import { useMapLocations } from '../../store/useAppStore'
+import { useMapLocations, useRankedLocations } from '../../store/useAppStore'
 import { sevHex, fmtInt } from '../../lib/format'
 import { MAP_CENTER } from './constants'
 import { FACILITIES } from '../../data/mock'
@@ -282,6 +282,8 @@ export function DisasterMap() {
 
   const theme = useAppStore((s) => s.theme)
   const locations = useMapLocations()
+  const activeEventId = useAppStore((s) => s.activeEventId)
+  const rankedLocations = useRankedLocations()
   const selectedId = useAppStore((s) => s.selectedLocationId)
   const drawerOpen = useAppStore((s) => s.drawerOpen)
   const openDrawer = useAppStore((s) => s.openDrawer)
@@ -291,6 +293,11 @@ export function DisasterMap() {
   const route = useAppStore((s) => s.route)
 
   const [glSupported] = useState(() => webgl2Supported())
+
+  const scenarioFieldReports = useMemo(
+    () => fieldReports.filter((r) => r.scenarioId === activeEventId),
+    [fieldReports, activeEventId],
+  )
 
   const selected = useMemo(
     () => locations.find((l) => l.id === selectedId) ?? null,
@@ -320,7 +327,7 @@ export function DisasterMap() {
 
     map.on('load', () => {
       addOverlayLayers(map)
-      applyOverlayState(map, locations, fieldReports, dataLayers, route)
+      applyOverlayState(map, locations, scenarioFieldReports, dataLayers, route)
       buildMarkers()
     })
 
@@ -346,7 +353,7 @@ export function DisasterMap() {
     map.setStyle(baseStyle(theme))
     const onStyle = () => {
       addOverlayLayers(map)
-      applyOverlayState(map, locations, fieldReports, dataLayers, route)
+      applyOverlayState(map, locations, scenarioFieldReports, dataLayers, route)
       buildMarkers()
     }
     if (map.isStyleLoaded()) {
@@ -357,14 +364,24 @@ export function DisasterMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme])
 
+  /* Recenter the viewport when the active scenario changes */
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.isStyleLoaded() || !rankedLocations.length) return
+    const lat = rankedLocations.reduce((sum, l) => sum + l.lat, 0) / rankedLocations.length
+    const lng = rankedLocations.reduce((sum, l) => sum + l.lng, 0) / rankedLocations.length
+    map.flyTo({ center: [lng, lat], zoom: 9, essential: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeEventId])
+
   /* Locations / data layers / route sync */
   useEffect(() => {
     const map = mapRef.current
     if (!map || !map.isStyleLoaded()) return
-    applyOverlayState(map, locations, fieldReports, dataLayers, route)
+    applyOverlayState(map, locations, scenarioFieldReports, dataLayers, route)
     buildMarkers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locations, fieldReports, dataLayers, route])
+  }, [locations, scenarioFieldReports, dataLayers, route])
 
   /* Route endpoint marker */
   useEffect(() => {

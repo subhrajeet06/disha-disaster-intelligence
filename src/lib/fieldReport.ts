@@ -61,7 +61,7 @@ export function computeScore(
   return Math.round(weighted)
 }
 
-export function buildFieldReport(input: FieldReportInput, now: string): PriorityLocation {
+export function buildFieldReport(input: FieldReportInput, now: string): Omit<PriorityLocation, 'scenarioId'> {
   const damage = severityToScore(input.damageLevel)
   const access = roadToScore(input.roadStatus)
   const service = severityToScore(input.serviceRisk)

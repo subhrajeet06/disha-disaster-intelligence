@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AuditEntry, DataLayerKey, DisasterEvent, FilterKey, PriorityLocation, RouteInfo, Toast, VerificationStatus } from '../types'
+import type { AuditEntry, DataLayerKey, DisasterEvent, FilterKey, KpiSummary, PriorityLocation, RouteInfo, Toast, VerificationStatus } from '../types'
 import { AUDIT_LOG, DISASTER_EVENTS, PRIORITIES } from '../data/mock'
 
 export type VerificationAction = 'confirmed' | 'rejected' | 'uncertain' | 'corrected'
@@ -58,7 +58,7 @@ interface AppState {
   fieldReports: PriorityLocation[]
   reportModalOpen: boolean
   setReportModal: (open: boolean) => void
-  addFieldReport: (report: PriorityLocation) => void
+  addFieldReport: (report: Omit<PriorityLocation, 'scenarioId'>) => void
   removeFieldReport: (id: string) => void
   setTheme: (t: ThemeMode) => void
   toggleTheme: () => void
@@ -172,7 +172,16 @@ export const useAppStore = create<AppState>((set) => ({
       }
     }),
 
-  setActiveEvent: (id) => set({ activeEventId: id, selectedLocationId: null }),
+  setActiveEvent: (id) =>
+    set({
+      activeEventId: id,
+      selectedLocationId: null,
+      drawerOpen: false,
+      mobileSheetOpen: false,
+      route: null,
+      routeLoading: false,
+      routeError: null,
+    }),
 
   selectLocation: (id) => set({ selectedLocationId: id }),
 
@@ -227,7 +236,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   addFieldReport: (report) =>
     set((s) => ({
-      fieldReports: [report, ...s.fieldReports],
+      fieldReports: [{ ...report, scenarioId: s.activeEventId }, ...s.fieldReports],
       auditLog: [
         {
           id: `au${Date.now()}fr`,
@@ -353,7 +362,10 @@ export function rankLocations(p: PriorityLocation[], overrides: Record<string, L
 export function useRankedLocations(): PriorityLocation[] {
   const overrides = useAppStore((s) => s.locationOverrides)
   const fieldReports = useAppStore((s) => s.fieldReports)
-  return rankLocations([...PRIORITIES, ...fieldReports], overrides)
+  const activeEventId = useAppStore((s) => s.activeEventId)
+  const base = PRIORITIES.filter((p) => p.scenarioId === activeEventId)
+  const reports = fieldReports.filter((r) => r.scenarioId === activeEventId)
+  return rankLocations([...base, ...reports], overrides)
 }
 
 export function useMapLocations(): PriorityLocation[] {
@@ -367,5 +379,22 @@ export function useMapLocations(): PriorityLocation[] {
       return all.filter((l) => l.roadStatus === 'blocked' || l.roadStatus === 'uncertain')
     case 'services':
       return all.filter((l) => l.serviceRisk === 'severe' || l.serviceRisk === 'critical')
+  }
+}
+
+/** KPI summary derived from a scenario's effective locations so the numbers always match the active scenario. */
+export function deriveKpi(locations: PriorityLocation[]): KpiSummary {
+  const total = locations.length
+  const verified = locations.filter((l) => l.status === 'confirmed' || l.status === 'corrected')
+  return {
+    buildingsAffected: locations.reduce((sum, l) => sum + l.buildingsAffected, 0),
+    buildingsVerified: verified.reduce((sum, l) => sum + l.buildingsAffected, 0),
+    roadsBlocked: locations.filter((l) => l.roadStatus === 'blocked').length,
+    roadsChecked: locations.filter((l) => l.roadStatus !== 'uncertain').length,
+    servicesAtRisk: locations.filter((l) => l.serviceRisk === 'severe' || l.serviceRisk === 'critical').length,
+    populationAffected: locations.reduce((sum, l) => sum + l.affectedPopulation, 0),
+    avgConfidence:
+      total === 0 ? 0 : locations.reduce((sum, l) => sum + l.aiConfidence, 0) / total,
+    verifiedShare: total === 0 ? 0 : verified.length / total,
   }
 }
