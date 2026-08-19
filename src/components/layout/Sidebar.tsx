@@ -71,7 +71,7 @@ export function Sidebar() {
               ${collapsed ? 'w-10 h-10' : 'w-11 h-11'}
             `}
           >
-            <Map className={collapsed ? 'w-5 h-5 text-white dark:text-ink' : 'w-6 h-6 text-white dark:text-ink'} />
+            <img src="/logo.svg" alt="DISHA Logo" className={collapsed ? 'w-6 h-6' : 'w-7 h-7'} />
           </div>
           {!collapsed && (
             <div className="leading-none">
