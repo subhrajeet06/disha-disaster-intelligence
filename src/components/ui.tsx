@@ -102,7 +102,7 @@ export function StatusPill({
 }) {
   const map: Record<string, string> = {
     neutral: 'bg-panel-soft text-ink-soft',
-    success: 'bg-panel-tint text-primary-deep',
+    success: 'bg-sev-bg-mild text-sev-text-mild',
     warn: 'bg-warn-bg text-warn-text',
     info: 'bg-info-bg text-info-text',
     danger: 'bg-danger-bg text-danger-text',

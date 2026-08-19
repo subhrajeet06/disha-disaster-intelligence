@@ -29,13 +29,13 @@ export function EventIcon({ type }: { type: DisasterEvent['type'] }) {
 }
 
 function ErrorBoundary({ children }: { children: React.ReactNode }) {
-  const [hasError, setHasError] = useState(false);
-  
+  const [hasError] = useState(false)
+
   if (hasError) {
-    return <div className="text-red-500 p-4">Something went wrong in the sidebar.</div>;
+    return <div className="text-red-500 p-4">Something went wrong in the sidebar.</div>
   }
-  
-  return <>{children}</>;
+
+  return <>{children}</>
 }
 
 export function Sidebar() {
@@ -51,13 +51,12 @@ export function Sidebar() {
   const [isLiveAuditExpanded, setIsLiveAuditExpanded] = useState<boolean>(false)
   const [isScenarioDropdownOpen, setIsScenarioDropdownOpen] = useState<boolean>(false)
 
-  // Debugging log
-  console.log('Sidebar rendered. Audit log:', auditLog);
-
   return (
     <ErrorBoundary>
       <aside
-        className={`hidden lg:flex shrink-0 flex-col h-screen bg-gradient-to-b from-[#13735f] to-[#0b4d3f] text-white transition-[width] duration-200 $
+        className={`hidden lg:flex shrink-0 flex-col h-screen transition-[width] duration-200 border-r border-transparent dark:border-edge
+          bg-gradient-to-b from-primary to-primary-deep text-white
+          dark:bg-none dark:bg-panel
           ${collapsed ? 'w-16' : 'w-[268px]'}
         `}
       >
@@ -72,12 +71,12 @@ export function Sidebar() {
               ${collapsed ? 'w-10 h-10' : 'w-11 h-11'}
             `}
           >
-            <Map className={collapsed ? 'w-5 h-5 text-white' : 'w-6 h-6 text-white'} />
+            <Map className={collapsed ? 'w-5 h-5 text-white dark:text-ink' : 'w-6 h-6 text-white dark:text-ink'} />
           </div>
           {!collapsed && (
             <div className="leading-none">
-              <p className="font-extrabold text-xl tracking-tight">DISHA</p>
-              <p className="text-[10px] font-medium text-white/60 mt-1 tracking-wide uppercase">
+              <p className="font-extrabold text-xl tracking-tight dark:text-ink">DISHA</p>
+              <p className="text-[10px] font-medium text-white/60 dark:text-ink-soft mt-1 tracking-wide uppercase">
                 Disaster Intelligence
               </p>
             </div>
@@ -99,10 +98,10 @@ export function Sidebar() {
                   className={`flex items-center rounded-[16px] text-sm font-semibold transition-colors duration-200 $
                     ${collapsed ? TILE : 'w-full h-10 gap-3 px-4'}
                     ${active
-                      ? 'bg-white/15 text-white'
+                      ? 'bg-white/15 text-white dark:bg-panel-tint dark:text-primary'
                       : n.disabled
-                        ? 'text-white/30 cursor-not-allowed'
-                        : 'text-white/65 hover:bg-white/8 hover:text-white'
+                        ? 'text-white/30 dark:text-ink-faint cursor-not-allowed'
+                        : 'text-white/65 hover:bg-white/8 hover:text-white dark:text-ink-soft dark:hover:bg-panel-soft dark:hover:text-ink'
                     }`}
                 >
                   <n.icon className="w-[18px] h-[18px] shrink-0" />
@@ -120,7 +119,7 @@ export function Sidebar() {
             <button
               onClick={() => setReportModal(true)}
               title={collapsed ? 'New field report' : undefined}
-              className={`flex items-center rounded-[16px] bg-white text-[#0b4d3f] font-bold text-sm shadow-md hover:bg-white/95 hover:shadow-lg transition-all duration-200 $
+              className={`flex items-center rounded-[16px] bg-white text-primary-deep dark:bg-primary dark:text-white font-bold text-sm shadow-md hover:bg-white/95 dark:hover:bg-primary-deep hover:shadow-lg transition-all duration-200 $
                 ${collapsed ? TILE : 'w-full gap-3 px-4 py-3 rounded-[20px]'}
               `}
             >
@@ -128,7 +127,7 @@ export function Sidebar() {
                 <Camera className="w-[18px] h-[18px]" />
               ) : (
                 <>
-                  <span className="flex items-center justify-center w-8 h-8 rounded-[12px] bg-[#13735f] text-white shrink-0">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-[12px] bg-primary text-white shrink-0">
                     <Camera className="w-4 h-4" />
                   </span>
                   <span className="whitespace-nowrap">New field report</span>

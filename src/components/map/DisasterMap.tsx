@@ -291,6 +291,7 @@ export function DisasterMap() {
   const fieldReports = useAppStore((s) => s.fieldReports)
   const dataLayers = useAppStore((s) => s.dataLayers)
   const route = useAppStore((s) => s.route)
+  const focusRequest = useAppStore((s) => s.focusRequest)
 
   const [glSupported] = useState(() => webgl2Supported())
 
@@ -374,6 +375,21 @@ export function DisasterMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeEventId])
 
+  /* Pan/zoom to a location requested from the global search bar */
+  useEffect(() => {
+    if (!focusRequest) return
+    const map = mapRef.current
+    if (!map) return
+    if (!map.isStyleLoaded()) {
+      map.once('load', () =>
+        map.flyTo({ center: [focusRequest.lng, focusRequest.lat], zoom: 12, essential: true, duration: 1600 }),
+      )
+      return
+    }
+    map.flyTo({ center: [focusRequest.lng, focusRequest.lat], zoom: 12, essential: true, duration: 1600 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest])
+
   /* Locations / data layers / route sync */
   useEffect(() => {
     const map = mapRef.current
@@ -420,7 +436,7 @@ export function DisasterMap() {
            drawer; don't clear the selection while the drawer is showing it. */
         if (!useAppStore.getState().drawerOpen) selectLocation(null)
       }
-      const popup = new maplibregl.Popup({ offset: 30, closeButton: true, maxWidth: '240px' })
+      const popup = new maplibregl.Popup({ offset: 30, closeButton: false, maxWidth: '240px' })
         .setLngLat([selected.lng, selected.lat])
         .setHTML(
           `<div style="font-family:Sora,Arial,sans-serif">
@@ -477,13 +493,36 @@ export function DisasterMap() {
         'border:none;background:transparent;cursor:pointer;padding:0;line-height:0;outline:none;'
       btn.innerHTML = `<img src="${markerSvg(loc)}" width="54" height="54" style="display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,0.28));transition:transform 160ms ease-in-out"/>`
       const img = btn.querySelector('img') as HTMLImageElement
+      let hoverPopup: maplibregl.Popup | null = null
       btn.addEventListener('mouseenter', () => {
         img.style.transform = 'scale(1.12)'
+        if (useAppStore.getState().selectedLocationId !== loc.id) {
+          hoverPopup = new maplibregl.Popup({ offset: 30, closeButton: false, maxWidth: '240px', closeOnClick: false })
+            .setLngLat([loc.lng, loc.lat])
+            .setHTML(
+              `<div style="font-family:Sora,Arial,sans-serif">
+                <p style="margin:0;font-size:10px;font-weight:700;color:var(--color-primary,#13735f)">Priority #${loc.rank}</p>
+                <p style="margin:2px 0 0;font-size:13px;font-weight:700;color:var(--color-ink,#333)">${loc.name}</p>
+                <p style="margin:2px 0 0;font-size:11px;color:var(--color-ink-soft,#5c6b66)">${fmtInt(loc.affectedPopulation)} exposed · ${loc.score}/100</p>
+              </div>`,
+            )
+            .addTo(map)
+        }
       })
       btn.addEventListener('mouseleave', () => {
         img.style.transform = 'scale(1)'
+        if (hoverPopup) {
+          hoverPopup.remove()
+          hoverPopup = null
+        }
       })
-      btn.addEventListener('click', () => openDrawer(loc.id))
+      btn.addEventListener('click', () => {
+        if (hoverPopup) {
+          hoverPopup.remove()
+          hoverPopup = null
+        }
+        openDrawer(loc.id)
+      })
       const marker = new maplibregl.Marker({ element: btn, anchor: 'center' })
         .setLngLat([loc.lng, loc.lat])
         .addTo(map)

@@ -58,7 +58,7 @@ function App() {
                   {/* New field report floating action — raised above mobile bottom nav */}
                   <button
                     onClick={openReport}
-                    className="absolute bottom-24 sm:bottom-6 right-4 sm:right-6 z-30 flex items-center gap-2 rounded-full bg-[#13735f] text-white font-bold text-sm px-5 py-3.5 shadow-xl shadow-[#13735f]/30 hover:bg-[#0b5c4c] hover:scale-[1.03] transition-all duration-200 active:scale-95"
+                    className="absolute bottom-24 sm:bottom-6 right-4 sm:right-6 z-30 flex items-center gap-2 rounded-full bg-primary text-white font-bold text-sm px-5 py-3.5 shadow-xl shadow-primary/30 hover:bg-primary-deep hover:scale-[1.03] transition-all duration-200 active:scale-95"
                     aria-label="New field report"
                   >
                     <Camera className="w-4 h-4" />
@@ -68,12 +68,12 @@ function App() {
 
                   {/* Mobile brand chip */}
                   <div className="lg:hidden absolute bottom-24 left-4 z-20 flex items-center gap-2 bg-[var(--color-panel)]/90 backdrop-blur rounded-full px-3 py-1.5 shadow-lg border border-edge">
-                    <span className="w-6 h-6 rounded-lg bg-[#13735f] flex items-center justify-center">
+                    <span className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
                       <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M12 3 L20 20 H4 Z" />
                       </svg>
                     </span>
-                    <span className="text-xs font-bold text-[#13735f]">DISHA</span>
+                    <span className="text-xs font-bold text-primary">DISHA</span>
                   </div>
                 </main>
 

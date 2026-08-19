@@ -35,6 +35,8 @@ interface AppState {
   route: RouteInfo | null
   routeLoading: boolean
   routeError: string | null
+  highlightId: string | null
+  focusRequest: { key: number; lat: number; lng: number } | null
 
   setActivePage: (p: PageKey) => void
   addScenario: (input: { name: string; type: DisasterEvent['type']; region: string }) => void
@@ -65,6 +67,8 @@ interface AppState {
   toggleDataLayer: (k: DataLayerKey) => void
   setRouteState: (r: { route?: RouteInfo | null; loading?: boolean; error?: string | null }) => void
   clearRoute: () => void
+  setHighlight: (id: string | null) => void
+  focusLocation: (id: string, lat: number, lng: number) => void
 }
 
 let toastId = 0
@@ -96,6 +100,8 @@ export const useAppStore = create<AppState>((set) => ({
   route: null,
   routeLoading: false,
   routeError: null,
+  highlightId: null,
+  focusRequest: null,
 
   setActivePage: (p) => set({ activePage: p, mobileSheetOpen: false }),
 
@@ -233,6 +239,18 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   clearRoute: () => set({ route: null, routeLoading: false, routeError: null }),
+
+  setHighlight: (id) => set({ highlightId: id }),
+
+  focusLocation: (id, lat, lng) =>
+    set({
+      activePage: 'command',
+      selectedLocationId: id,
+      highlightId: id,
+      kpiFilter: null,
+      mobileSheetOpen: false,
+      focusRequest: { key: Date.now(), lat, lng },
+    }),
 
   addFieldReport: (report) =>
     set((s) => ({

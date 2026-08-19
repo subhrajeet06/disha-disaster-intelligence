@@ -2,6 +2,7 @@ import { Building2, Users, AlertTriangle, Route, Moon, Sun, ChevronLeft, Chevron
 import { useAppStore } from '../../store/useAppStore'
 import { useKpi } from '../../api/mockApi'
 import { fmtInt } from '../../lib/format'
+import { SearchBar } from './SearchBar'
 import type { FilterKey } from '../../types'
 
 const PAGE_TITLE: Record<string, string> = {
@@ -69,9 +70,9 @@ export function TopBar() {
   }
 
   return (
-    <header className="shrink-0 border-b border-edge bg-[var(--color-panel)]/85 backdrop-blur px-3 sm:px-5 py-2.5">
-      <div className={`flex items-center justify-between gap-3 ${activePage === 'command' ? 'mb-2' : ''}`}>
-        <div className="flex items-center gap-2 min-w-0">
+    <header className="shrink-0 relative z-30 border-b border-edge bg-[var(--color-panel)]/85 backdrop-blur px-3 sm:px-5 py-2.5">
+      <div className={`flex items-center gap-3 ${activePage === 'command' ? 'mb-2' : ''}`}>
+        <div className="flex items-center gap-2 min-w-0 shrink-0">
           <button
             onClick={toggleSidebar}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -88,6 +89,9 @@ export function TopBar() {
             </h1>
           </div>
         </div>
+
+        <SearchBar />
+
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={toggleTheme}

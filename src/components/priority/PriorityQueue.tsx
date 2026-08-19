@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, Users, Route } from 'lucide-react'
 import { useRankedLocations } from '../../store/useAppStore'
 import { useAppStore } from '../../store/useAppStore'
@@ -18,6 +18,15 @@ export function PriorityQueue({ compact = false }: { compact?: boolean }) {
   const [tab, setTab] = useState<Tab>('all')
   const locations = useRankedLocations()
   const openDrawer = useAppStore((s) => s.openDrawer)
+  const highlightId = useAppStore((s) => s.highlightId)
+  const setHighlight = useAppStore((s) => s.setHighlight)
+
+  /* Auto-clear the search highlight after a short pulse */
+  useEffect(() => {
+    if (!highlightId) return
+    const t = setTimeout(() => setHighlight(null), 2600)
+    return () => clearTimeout(t)
+  }, [highlightId, setHighlight])
 
   const filtered = useMemo(() => {
     if (tab === 'all') return locations
@@ -51,7 +60,12 @@ export function PriorityQueue({ compact = false }: { compact?: boolean }) {
 
       <div className="flex-1 overflow-y-auto scroll-thin px-3 pb-4 space-y-2.5">
         {filtered.map((loc) => (
-          <PriorityCard key={loc.id} loc={loc} onOpen={() => openDrawer(loc.id)} />
+          <PriorityCard
+            key={loc.id}
+            loc={loc}
+            highlighted={highlightId === loc.id}
+            onOpen={() => openDrawer(loc.id)}
+          />
         ))}
         {!filtered.length && (
           <div className="text-center py-10 text-sm font-medium text-ink-faint">No locations in this view.</div>
@@ -72,12 +86,33 @@ export function PriorityQueue({ compact = false }: { compact?: boolean }) {
   )
 }
 
-export function PriorityCard({ loc, onOpen }: { loc: PriorityLocation; onOpen: () => void }) {
+export function PriorityCard({
+  loc,
+  onOpen,
+  highlighted = false,
+}: {
+  loc: PriorityLocation
+  onOpen: () => void
+  highlighted?: boolean
+}) {
+  const cardRef = useRef<HTMLButtonElement>(null)
   const verified = loc.status !== 'pending'
+
+  useEffect(() => {
+    if (highlighted) {
+      cardRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [highlighted])
+
   return (
     <button
+      ref={cardRef}
       onClick={onOpen}
-      className="w-full text-left group rounded-[24px] border border-edge bg-panel hover:border-primary/50 hover:shadow-lg hover:shadow-[#13735f]/5 transition-all duration-200 px-4 py-3.5"
+      className={`w-full text-left group rounded-[24px] border px-4 py-3.5 transition-all duration-200 ${
+        highlighted
+          ? 'border-primary bg-panel-tint shadow-lg shadow-primary/25 ring-2 ring-primary/60 scale-[1.02]'
+          : 'border-edge bg-panel hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5'
+      }`}
     >
       <div className="flex items-center gap-3">
         <ScoreRing score={loc.score} size={56} stroke={5} />
