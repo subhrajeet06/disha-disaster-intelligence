@@ -10,6 +10,7 @@ import { MapOverlay } from './components/map/MapOverlay'
 import { PriorityQueue } from './components/priority/PriorityQueue'
 import { EvidenceDrawer } from './components/evidence/EvidenceDrawer'
 import { FieldReportModal } from './components/report/FieldReportModal'
+import { InspectionRouteModal } from './components/map/InspectionRouteModal'
 import { ScenarioPage } from './components/pages/ScenarioPage'
 import { ImageryPage } from './components/pages/ImageryPage'
 import { ReportsPage } from './components/pages/ReportsPage'
@@ -85,6 +86,7 @@ function App() {
         <MobileBottomNav />
         <EvidenceDrawer />
         <FieldReportModal />
+        <InspectionRouteModal />
         <Toasts />
       </div>
     </QueryClientProvider>

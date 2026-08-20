@@ -1,7 +1,7 @@
-import { Activity, ChevronDown, Layers, Map, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera } from 'lucide-react'
+import { Activity, ChevronDown, Layers, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera } from 'lucide-react'
 import { useAppStore, type PageKey } from '../../store/useAppStore'
 import type { DisasterEvent } from '../../types'
-import { useState } from 'react'
+import React, { Component, useState } from 'react'
 
 const NAV: Array<{ label: string; icon: typeof Radar; page?: PageKey; disabled?: boolean }> = [
   { label: 'Command', icon: Radar, page: 'command' },
@@ -28,16 +28,36 @@ export function EventIcon({ type }: { type: DisasterEvent['type'] }) {
   }
 }
 
-function ErrorBoundary({ children }: { children: React.ReactNode }) {
-  const [hasError] = useState(false)
-
-  if (hasError) {
-    return <div className="text-red-500 p-4">Something went wrong in the sidebar.</div>
-  }
-
-  return <>{children}</>
+interface ErrorBoundaryProps {
+  children: React.ReactNode
 }
 
+interface ErrorBoundaryState {
+  hasError: boolean
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Sidebar error boundary caught an error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="text-red-500 p-4">Something went wrong in the sidebar.</div>
+    }
+
+    return this.props.children
+  }
+}
 export function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed)
   const activeEventId = useAppStore((s) => s.activeEventId)

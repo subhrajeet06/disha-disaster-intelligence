@@ -108,3 +108,24 @@ export interface RouteInfo {
   alternatives: number
   facilityLngLat: [number, number]
 }
+
+export interface InspectionStop {
+  id: string
+  name: string
+  rank: number
+  score: number
+  roadStatus: RoadStatus
+  lat: number
+  lng: number
+  isBlockedConstraint?: boolean
+}
+
+export interface InspectionRoutePlan {
+  baseLocationId: string
+  baseName: string
+  stops: InspectionStop[]
+  totalDistanceM: number
+  totalDurationS: number
+  routeGeojson: FeatureCollection
+  constraintNotes: string[]
+}

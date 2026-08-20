@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, Users, Route } from 'lucide-react'
+import { ChevronRight, Users, Route, Navigation } from 'lucide-react'
 import { useRankedLocations } from '../../store/useAppStore'
 import { useAppStore } from '../../store/useAppStore'
 import { ScoreRing, SeverityPill, StatusPill } from '../ui'
@@ -39,9 +39,13 @@ export function PriorityQueue({ compact = false }: { compact?: boolean }) {
       <div className="px-5 pt-5 pb-3">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-ink tracking-tight">Response priorities</h2>
-          <span className="text-[11px] font-bold text-primary bg-panel-tint rounded-full px-2.5 py-1">
-            {locations.length} locations
-          </span>
+          <button
+            onClick={() => useAppStore.getState().setInspectionPlanningOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary text-white hover:bg-primary-deep shadow-sm transition-colors"
+          >
+            <Navigation className="w-3.5 h-3.5" />
+            Plan Route
+          </button>
         </div>
         <div className="flex gap-1.5">
           {TABS.map((t) => (

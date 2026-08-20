@@ -5,6 +5,7 @@ import { useKpi } from '../../api/mockApi'
 import { ScoreRing, SeverityPill, StatusPill } from '../ui'
 import { fmtInt, pct } from '../../lib/format'
 import { exportPrioritiesCsv, exportPrioritiesGeoJson, exportSituationReport } from '../../lib/exportReport'
+import { PageFooter } from '../layout/PageFooter'
 
 const STATS = [
   { key: 'buildingsAffected', label: 'Buildings affected', icon: Building2, accent: 'var(--color-sev-critical)' },
@@ -199,6 +200,8 @@ export function ReportsPage() {
             </div>
           </div>
         )}
+
+        <PageFooter />
       </div>
     </div>
   )

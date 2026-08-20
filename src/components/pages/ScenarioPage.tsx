@@ -5,6 +5,7 @@ import { EventIcon } from '../layout/Sidebar'
 import { StatusPill } from '../ui'
 import { fmtInt } from '../../lib/format'
 import type { DisasterEvent } from '../../types'
+import { PageFooter } from '../layout/PageFooter'
 
 const TYPES: Array<{ key: DisasterEvent['type']; label: string; icon: typeof Waves }> = [
   { key: 'cyclone', label: 'Cyclone', icon: Waves },
@@ -84,6 +85,8 @@ export function ScenarioPage() {
             No scenarios yet. Create one to begin ingesting imagery.
           </div>
         )}
+
+        <PageFooter />
       </div>
     </div>
   )
