@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { X, Check, ThumbsDown, HelpCircle, MapPin, Users, Route, ShieldCheck, FileText, ImageIcon, ScanLine, Navigation, Loader2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { X, Check, ThumbsDown, HelpCircle, MapPin, Users, Route, ShieldCheck, FileText, ImageIcon, ScanLine, Navigation, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAppStore, type VerificationAction } from '../../store/useAppStore'
 import { useRankedLocations } from '../../store/useAppStore'
 import { FACILITIES, FACTOR_META, FACTOR_ORDER } from '../../data/mock'
@@ -31,9 +31,14 @@ const KIND_META: Record<Evidence['kind'], { icon: typeof ImageIcon; label: strin
 export function EvidenceDrawer() {
   const drawerOpen = useAppStore((s) => s.drawerOpen)
   const closeDrawer = useAppStore((s) => s.closeDrawer)
+  const openDrawer = useAppStore((s) => s.openDrawer)
   const selectedId = useAppStore((s) => s.selectedLocationId)
   const locations = useRankedLocations()
   const loc = useMemo(() => locations.find((l) => l.id === selectedId), [locations, selectedId])
+  const currentIndex = useMemo(() => locations.findIndex((l) => l.id === selectedId), [locations, selectedId])
+  
+  const prevLoc = currentIndex > 0 ? locations[currentIndex - 1] : null
+  const nextLoc = currentIndex !== -1 && currentIndex < locations.length - 1 ? locations[currentIndex + 1] : null
 
   const applyVerification = useAppStore((s) => s.applyVerification)
   const routeLoading = useAppStore((s) => s.routeLoading)
@@ -79,6 +84,27 @@ export function EvidenceDrawer() {
     }
   }
 
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return
+    const touchEnd = e.changedTouches[0].clientX
+    const diff = touchStart - touchEnd
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && nextLoc) {
+        openDrawer(nextLoc.id)
+      } else if (diff < 0 && prevLoc) {
+        openDrawer(prevLoc.id)
+      }
+    }
+    setTouchStart(null)
+  }
+
   if (!drawerOpen || !loc) return null
 
   return (
@@ -86,9 +112,29 @@ export function EvidenceDrawer() {
       <div
         className="w-full max-w-[520px] h-full bg-panel shadow-2xl overflow-hidden flex flex-col animate-drawer-in"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
       >
         {/* Header */}
         <div className="bg-gradient-to-br from-[#13735f] to-[#0b4d3f] text-white px-6 pt-6 pb-5 relative">
+          <div className="absolute right-14 top-4 flex gap-1">
+            <button
+              onClick={() => prevLoc && openDrawer(prevLoc.id)}
+              disabled={!prevLoc}
+              className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 disabled:opacity-30 disabled:hover:bg-white/15 transition-colors flex items-center justify-center"
+              aria-label="Previous priority"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => nextLoc && openDrawer(nextLoc.id)}
+              disabled={!nextLoc}
+              className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 disabled:opacity-30 disabled:hover:bg-white/15 transition-colors flex items-center justify-center"
+              aria-label="Next priority"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
           <button
             onClick={closeDrawer}
             className="absolute right-4 top-4 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 transition-colors flex items-center justify-center"

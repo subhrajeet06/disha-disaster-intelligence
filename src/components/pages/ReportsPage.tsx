@@ -44,7 +44,7 @@ export function ReportsPage() {
 
   return (
     <div className="h-full overflow-y-auto scroll-thin">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24 lg:pb-6 space-y-6">
         {/* KPI row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {STATS.map((s) => (

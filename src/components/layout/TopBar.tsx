@@ -60,6 +60,7 @@ export function TopBar() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const scenarios = useAppStore((s) => s.scenarios)
   const activePage = useAppStore((s) => s.activePage)
+  const setActivePage = useAppStore((s) => s.setActivePage)
   const event = scenarios.find((e) => e.id === activeEventId) ?? scenarios[0]
 
   const k = kpi ?? {
@@ -76,9 +77,16 @@ export function TopBar() {
           <button
             onClick={toggleSidebar}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full border border-edge bg-[var(--color-panel)] text-[var(--color-ink-soft)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/50 transition-colors duration-200"
+            className="hidden lg:flex shrink-0 items-center justify-center w-8 h-8 rounded-full border border-edge bg-[var(--color-panel)] text-[var(--color-ink-soft)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/50 transition-colors duration-200"
           >
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setActivePage('scenario')}
+            aria-label="Change scenario"
+            className="lg:hidden shrink-0 flex items-center justify-center w-8 h-8 rounded-full border border-edge bg-[var(--color-panel)] text-[var(--color-ink-soft)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/50 transition-colors duration-200"
+          >
+            <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
@@ -140,13 +148,11 @@ export function TopBar() {
                     {c.label}
                   </span>
                 </span>
-                {clickable && (
+                {clickable && active && (
                   <span
-                    className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                      active ? 'bg-white/20 text-white' : 'bg-panel-tint text-primary'
-                    }`}
+                    className="ml-auto shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold bg-white/20 text-white"
                   >
-                    {active ? 'ON' : 'FILTER'}
+                    ON
                   </span>
                 )}
               </button>

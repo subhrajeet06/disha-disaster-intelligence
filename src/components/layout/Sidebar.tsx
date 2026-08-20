@@ -67,7 +67,7 @@ export function Sidebar() {
           `}
         >
           <div
-            className={`rounded-[14px] bg-white/15 backdrop-blur flex items-center justify-center shrink-0 $
+            className={`rounded-[14px] bg-white/15 dark:bg-panel-tint backdrop-blur flex items-center justify-center shrink-0 $
               ${collapsed ? 'w-10 h-10' : 'w-11 h-11'}
             `}
           >

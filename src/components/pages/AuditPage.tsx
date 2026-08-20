@@ -52,7 +52,7 @@ export function AuditPage() {
 
   return (
     <div className="h-full overflow-y-auto scroll-thin">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-24 lg:pb-6 space-y-6">
         {/* Golden rule banner */}
         <div className="rounded-[28px] bg-gradient-to-br from-[#13735f] to-[#0b4d3f] text-white px-6 py-6 sm:px-8 sm:py-7">
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-[#9ad4c1] mb-2">

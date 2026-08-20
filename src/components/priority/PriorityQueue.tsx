@@ -35,7 +35,7 @@ export function PriorityQueue({ compact = false }: { compact?: boolean }) {
   }, [locations, tab])
 
   return (
-    <div className="flex flex-col h-full bg-panel">
+    <div className="flex flex-col h-full bg-panel flex-1 min-h-0">
       <div className="px-5 pt-5 pb-3">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-ink tracking-tight">Response priorities</h2>
@@ -73,10 +73,10 @@ export function PriorityQueue({ compact = false }: { compact?: boolean }) {
       </div>
 
       {compact && (
-        <div className="px-5 py-3 border-t border-edge">
+        <div className="px-5 py-3 border-t border-edge shrink-0">
           <button
             onClick={() => useAppStore.getState().setMobileSheet(false)}
-            className="w-full rounded-[16px] bg-panel-tint text-primary-deep text-sm font-bold py-2.5"
+            className="w-full rounded-[16px] bg-panel-soft text-ink hover:bg-panel-tint transition-colors text-sm font-bold py-2.5"
           >
             Close
           </button>
