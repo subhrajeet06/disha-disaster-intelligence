@@ -127,7 +127,7 @@ export function Sidebar() {
                   <n.icon className="w-[18px] h-[18px] shrink-0" />
                   {!collapsed && n.label}
                   {!collapsed && n.disabled && (
-                    <span className="ml-auto text-[9px] font-bold text-white/35">SOON</span>
+                    <span className="ml-auto text-[9px] font-bold text-white/35 dark:text-ink-faint">SOON</span>
                   )}
                 </button>
               )
@@ -162,7 +162,7 @@ export function Sidebar() {
           {/* Active scenario */}
           <div className="mt-6 px-3">
             {!collapsed && (
-              <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">
+              <p className="px-4 text-[10px] font-bold uppercase tracking-widest text-white/40 dark:text-ink-faint mb-2">
                 Active scenario
               </p>
             )}
@@ -220,7 +220,7 @@ export function Sidebar() {
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => setIsLiveAuditExpanded(!isLiveAuditExpanded)}
-                className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors duration-200"
+                className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white dark:hover:text-ink dark:text-ink-faint transition-colors duration-200"
               >
                 Live audit
                 <ChevronDown className={`w-3 h-3 transform transition-transform duration-200 ${isLiveAuditExpanded ? 'rotate-180' : ''}`} />
@@ -244,8 +244,8 @@ export function Sidebar() {
                       `}
                     />
                     <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-white/85 leading-snug truncate">{a.action}</p>
-                      <p className="text-[10px] text-white/45">
+                      <p className="text-[11px] font-semibold text-white/85 dark:text-ink leading-snug truncate">{a.action}</p>
+                      <p className="text-[10px] text-white/45 dark:text-ink-faint">
                         {a.target} · {a.time}
                       </p>
                     </div>

@@ -389,7 +389,7 @@ export function SearchBar() {
             requestAnimationFrame(() => mobileRef.current?.focus())
           }}
           aria-label="Search"
-          className="lg:hidden flex items-center justify-center w-8 h-8 rounded-full border border-edge bg-panel text-ink-soft hover:text-primary hover:border-primary/50 transition-colors duration-200"
+          className="lg:hidden shrink-0 flex items-center justify-center w-8 h-8 rounded-full border border-edge bg-panel text-ink-soft hover:text-primary hover:border-primary/50 dark:bg-panel-soft dark:border-edge-strong dark:text-ink dark:hover:text-primary transition-colors duration-200"
         >
           <Search className="w-4 h-4" />
         </button>

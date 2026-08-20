@@ -89,7 +89,7 @@ export function TopBar() {
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-primary dark:text-ink-soft">
               {event.name} · {event.region}
             </p>
             <h1 className="text-xl sm:text-2xl font-bold text-ink tracking-tight truncate">
@@ -104,12 +104,12 @@ export function TopBar() {
           <button
             onClick={toggleTheme}
             aria-label="Toggle dark mode"
-            className="flex items-center justify-center w-8 h-8 rounded-full border border-[var(--color-edge)] bg-[var(--color-panel)] text-[var(--color-ink-soft)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)]/50 transition-colors duration-200"
+            className="flex items-center justify-center w-8 h-8 rounded-full border transition-colors duration-200 bg-panel border-edge text-ink-soft hover:text-primary hover:border-primary/50 dark:bg-panel-soft dark:border-edge-strong dark:text-ink hover:dark:text-primary dark:hover:border-primary/40"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[var(--color-panel-tint)] text-[var(--color-primary-deep)] px-3 py-1 text-[11px] font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)] animate-pulse" />
+          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold bg-panel-tint text-primary-deep border border-edge dark:bg-panel-soft dark:text-ink-soft dark:border-edge-strong">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             {event.status === 'review' ? 'AI + human review active' : 'Processing'}
           </span>
         </div>

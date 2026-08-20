@@ -402,6 +402,7 @@ export function DisasterMap() {
     const map = mapRef.current
     if (!map || !map.isStyleLoaded()) return
     applyOverlayState(map, locations, scenarioFieldReports, dataLayers, activeRouteData)
+    buildMarkers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locations, scenarioFieldReports, dataLayers, activeRouteData])
 

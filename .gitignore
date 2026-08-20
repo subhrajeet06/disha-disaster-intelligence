@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+graphify-out
 
 # Environment files (never commit secrets) — keep .env.example tracked
 .env

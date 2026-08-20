@@ -197,6 +197,7 @@ export const useAppStore = create<AppState>((set) => ({
       route: null,
       routeLoading: false,
       routeError: null,
+      highlightId: null,
     }),
 
   selectLocation: (id) => set({ selectedLocationId: id }),
