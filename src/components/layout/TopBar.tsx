@@ -71,7 +71,7 @@ export function TopBar() {
   }
 
   return (
-    <header className="shrink-0 relative z-30 border-b border-edge bg-[var(--color-panel)]/85 backdrop-blur px-3 sm:px-5 py-2.5">
+    <header className="shrink-0 relative z-30 border-b border-edge bg-[var(--color-panel)]/85 dark:bg-fixed dark:bg-gradient-to-b dark:from-panel-tint dark:via-panel dark:to-background backdrop-blur px-3 sm:px-5 py-2.5">
       <div className={`flex items-center gap-3 ${activePage === 'command' ? 'mb-2' : ''}`}>
         <div className="flex items-center gap-2 min-w-0 shrink-0">
           <button

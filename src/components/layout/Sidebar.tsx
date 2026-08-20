@@ -76,7 +76,7 @@ export function Sidebar() {
       <aside
         className={`hidden lg:flex shrink-0 flex-col h-screen transition-[width] duration-200 border-r border-transparent dark:border-edge
           bg-gradient-to-b from-primary to-primary-deep text-white
-          dark:bg-none dark:bg-panel
+          dark:bg-fixed dark:bg-gradient-to-b dark:from-panel-tint dark:via-panel dark:to-background dark:text-ink
           ${collapsed ? 'w-16' : 'w-[268px]'}
         `}
       >
@@ -87,7 +87,7 @@ export function Sidebar() {
           `}
         >
           <div
-            className={`rounded-[14px] bg-white/15 dark:bg-panel-tint backdrop-blur flex items-center justify-center shrink-0 $
+            className={`rounded-[14px] bg-white/15 dark:bg-white/10 dark:ring-1 dark:ring-white/10 backdrop-blur flex items-center justify-center shrink-0 $
               ${collapsed ? 'w-10 h-10' : 'w-11 h-11'}
             `}
           >

@@ -35,7 +35,7 @@ export function PriorityQueue({ compact = false }: { compact?: boolean }) {
   }, [locations, tab])
 
   return (
-    <div className="flex flex-col h-full bg-panel flex-1 min-h-0">
+    <div className="flex flex-col h-full bg-panel dark:bg-fixed dark:bg-gradient-to-b dark:from-panel-tint dark:via-panel dark:to-background flex-1 min-h-0">
       <div className="px-5 pt-5 pb-3">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-ink tracking-tight">Response priorities</h2>
