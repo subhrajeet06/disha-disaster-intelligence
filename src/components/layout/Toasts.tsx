@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CheckCircle2, Info, AlertTriangle, X } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import type { Toast } from '../../types'
@@ -29,12 +30,41 @@ export function Toasts() {
   )
 }
 
-function ToastRow({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
+function ToastRow({ toast, onDismiss, duration = 2000 }: { toast: Toast; onDismiss: () => void; duration?: number }) {
   const Icon = ICONS[toast.tone]
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [exiting, setExitting] = useState(false)
+  const reducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const startTimer = useCallback(() => {
+    clearTimeout(timerRef.current!)
+    timerRef.current = setTimeout(() => {
+      if (reducedMotion) {
+        onDismiss()
+        return
+      }
+      setExitting(true)
+      setTimeout(onDismiss, 300)
+    }, duration)
+  }, [duration, reducedMotion, onDismiss])
+
+  useEffect(() => {
+    startTimer()
+    return () => clearTimeout(timerRef.current!)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div
-      className="pointer-events-auto flex items-start gap-3 rounded-[24px] bg-panel shadow-xl border border-edge px-4 py-3.5 animate-toast-in"
+      className={[
+        'pointer-events-auto flex items-start gap-3 rounded-[24px] bg-panel shadow-xl border border-edge px-4 py-3.5',
+        'animate-toast-in',
+        exiting ? 'animate-toast-out' : '',
+      ].join(' ')}
       style={{ animation: 'toast-in 220ms ease-in-out' }}
+      onMouseEnter={() => clearTimeout(timerRef.current!)}
+      onMouseLeave={startTimer}
     >
       <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${COLORS[toast.tone]}`} />
       <div className="flex-1 min-w-0">
