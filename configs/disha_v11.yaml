@@ -1,0 +1,117 @@
+# =============================================================================
+# DISHA V11 -- Triage Layer Configuration
+# =============================================================================
+# V11 does NOT retrain. It applies post-processing to the V10 checkpoint.
+# All threshold / postproc decisions use ONLY the validation set.
+# The test set is touched ONCE after the config is frozen.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Core
+# ---------------------------------------------------------------------------
+seed: 42
+batch_size: 2
+num_workers: 0
+image_size: 512
+
+# ---------------------------------------------------------------------------
+# V10 checkpoint (frozen -- do not modify) -> Now using V11 FT checkpoint
+# ---------------------------------------------------------------------------
+v10_checkpoint: models/disha_v11/best_model_v11.pth
+encoder_name: resnet34
+encoder_weights: imagenet
+in_channels: 6
+num_classes: 5
+
+# ---------------------------------------------------------------------------
+# Dataset
+# ---------------------------------------------------------------------------
+dataset_root: data/processed/xbd_disha
+
+# ---------------------------------------------------------------------------
+# Damage grouping -- 5-class -> application classes
+# ---------------------------------------------------------------------------
+# OPTION A (3-level, default)
+#   0 = no_damage   : background (0) + no_damage (1)
+#   1 = DAMAGE      : minor_damage (2)
+#   2 = SEVERE      : major_damage (3) + destroyed (4)
+#
+# OPTION B (binary)
+#   0 = no_damage   : background (0) + no_damage (1)
+#   1 = DAMAGE      : minor (2) + major (3) + destroyed (4)
+#
+# Both are always computed. Selected grouping used in final triage map.
+# ---------------------------------------------------------------------------
+grouping_mode: "3level"   # "3level" or "binary" -- set after visual inspection
+
+# Class index -> application label mappings
+grouping_3level:
+  no_damage:     [0, 1]   # background + no_damage
+  damage:        [2]      # minor_damage
+  severe:        [3, 4]   # major_damage + destroyed
+
+grouping_binary:
+  no_damage:     [0, 1]
+  damage:        [2, 3, 4]
+
+# ---------------------------------------------------------------------------
+# Damage probability score
+# Per-pixel: damage_score = P(minor) + P(major) + P(destroyed)
+# Per-pixel: severe_score = P(major) + P(destroyed)
+# ---------------------------------------------------------------------------
+damage_classes: [2, 3, 4]   # classes contributing to damage_score
+severe_classes: [3, 4]      # classes contributing to severe_score
+
+# ---------------------------------------------------------------------------
+# Threshold grid (validation set ONLY)
+# The selected threshold is applied to damage_score to produce binary damage
+# ---------------------------------------------------------------------------
+threshold_grid: [0.20, 0.30, 0.40, 0.50, 0.60, 0.70]
+
+# FROZEN after inspection -- set by agent after reading threshold_results.csv
+# This field is updated by the agent; do not edit manually until freeze step
+selected_threshold: 0.7
+
+# ---------------------------------------------------------------------------
+# Post-processing
+# ---------------------------------------------------------------------------
+# Remove connected components smaller than this area (pixels) after thresholding
+min_component_area: 200    # configurable; validated visually on val examples
+# Morphological closing kernel (square, pixels) -- 0 = disabled
+morphology_close_size: 3
+
+# ---------------------------------------------------------------------------
+# Output directory
+# ---------------------------------------------------------------------------
+output_dir: models/disha_v11
+
+# How many validation samples to render as 6-panel visuals
+num_visual_samples: 8
+
+# ---------------------------------------------------------------------------
+# Triage display colors (RGB) for demo output
+# ---------------------------------------------------------------------------
+triage_colors:
+  no_damage:  [34, 197, 94]    # green
+  damage:     [251, 146, 60]   # orange
+  severe:     [220, 38, 38]    # red
+  background: [15, 23, 42]     # dark navy (background region)
+
+# ---------------------------------------------------------------------------
+# Optional fine-tuning (ONLY if V10+postprocess is insufficient)
+# DO NOT enable unless validation proves it is necessary
+# ---------------------------------------------------------------------------
+finetune_enabled: true
+finetune_lr: 0.00001           # very low LR starting from V10 checkpoint
+finetune_epochs: 10            # max epochs -- early stopping will trigger earlier
+finetune_patience: 4           # early stopping patience
+finetune_batch_size: 2
+# V11 loss: flip Tversky to alpha=0.7, beta=0.3 (penalize FP more, recall less)
+finetune_tversky_alpha: 0.7    # higher FP penalty vs V10's 0.3
+finetune_tversky_beta: 0.30    # lower FN penalty vs V10's 0.7
+finetune_focal_weight: 0.50
+finetune_tversky_weight: 0.50
+finetune_focal_gamma: 2.0
+# Rebalanced class weights (reduce extreme damage emphasis to cut false positives)
+finetune_class_weights: [0.10, 1.0, 3.0, 3.0, 5.0]
+finetune_output_dir: models/disha_v11

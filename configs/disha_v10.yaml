@@ -1,0 +1,87 @@
+# =============================================================================
+# DISHA V10 — Training Configuration
+# =============================================================================
+# Run: python src/training/train_v10.py --config configs/disha_v10.yaml
+# =============================================================================
+
+# --- Paths ---
+dataset_root: "data/processed/xbd_disha"
+checkpoint_dir: "models/disha_v10"
+
+# --- Reproducibility ---
+seed: 42
+
+# --- Image ---
+image_size: 512
+
+# --- Training ---
+epochs: 30
+batch_size: 2
+num_workers: 0
+
+# --- Optimizer ---
+lr: 0.0001
+weight_decay: 0.0001
+
+# --- Early Stopping ---
+early_stopping_patience: 6
+
+# --- Scheduler ---
+# ReduceLROnPlateau on validation damage_miou
+scheduler_patience: 3
+scheduler_factor: 0.5
+scheduler_min_lr: 0.0000001
+
+# --- AMP ---
+use_amp: true
+
+# --- Model ---
+# encoder: resnet34, pretrained on ImageNet for faster convergence
+encoder_name: "resnet34"
+encoder_weights: "imagenet"
+in_channels: 6
+num_classes: 5
+
+# --- Class weights (derived from training pixel counts) ---
+# background:   94.08% → 0.10
+# no_damage:     3.81% → 1.00  (reference)
+# minor_damage:  0.72% → 5.29
+# major_damage:  0.94% → 4.05
+# destroyed:     0.45% → 8.47
+# Cap: 8.5 max to avoid training instability
+class_weights:
+  - 0.10   # background
+  - 1.00   # no_damage
+  - 5.29   # minor_damage
+  - 4.05   # major_damage
+  - 8.47   # destroyed
+
+# --- Loss ---
+# focal_ce_weight + damage_tversky_weight must sum to 1.0
+loss_focal_ce_weight: 0.40
+loss_tversky_weight: 0.60
+focal_gamma: 2.0
+tversky_alpha: 0.30   # FP weight
+tversky_beta: 0.70    # FN weight (higher = penalize misses more)
+
+# --- Weighted Sampler ---
+# Images containing minor_damage or major_damage get this weight multiplier
+rare_class_weight: 3.0
+# Images with destroyed only get this multiplier
+destroyed_weight: 1.5
+# Cap on any single image weight
+max_sample_weight: 5.0
+
+# --- Dataset Sampling Strategy ---
+# Probabilities must sum to 1.0
+damage_crop_probability: 0.65
+random_crop_probability: 0.20
+# Remaining 0.15 = full image resize
+
+# --- Visual Validation ---
+visual_interval: 5         # Save visual every N epochs
+num_visual_samples: 4      # Fixed samples to visualize
+
+# --- Sanity Check ---
+run_sanity_check: true
+sanity_batches: 3

@@ -43,3 +43,40 @@ $RECYCLE.BIN/
 .vite
 .cache
 
+# Python virtual environments & bytecode
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Datasets, raw inputs & large archives
+data/
+train/
+raw/
+processed/
+train_images_labels_targets/
+*.tar
+*.zip
+*.gz
+*.7z
+
+# Machine Learning models, checkpoints & heavy outputs
+models/
+outputs/
+*.pth
+*.pt
+*.onnx
+*.ckpt
+*.bin
+*.h5
+*.safetensors
+
+# Generated reports & logs
+reports/
+*.log
+
+# Temporary & junk files
+how --name-status HEAD

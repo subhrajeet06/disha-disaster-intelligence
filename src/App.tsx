@@ -15,6 +15,7 @@ import { ScenarioPage } from './components/pages/ScenarioPage'
 import { ImageryPage } from './components/pages/ImageryPage'
 import { ReportsPage } from './components/pages/ReportsPage'
 import { AuditPage } from './components/pages/AuditPage'
+import { V11AnalysisPage } from './components/v11/V11AnalysisPage'
 import { useAppStore } from './store/useAppStore'
 
 const queryClient = new QueryClient({
@@ -78,6 +79,7 @@ function App() {
                 {activePage === 'imagery' && <ImageryPage />}
                 {activePage === 'reports' && <ReportsPage />}
                 {activePage === 'audit' && <AuditPage />}
+                {activePage === 'v11-analysis' && <V11AnalysisPage />}
               </main>
             )}
           </div>

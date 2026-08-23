@@ -1,4 +1,4 @@
-import { Activity, ChevronDown, Layers, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera } from 'lucide-react'
+import { Activity, ChevronDown, Layers, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera, FlaskConical } from 'lucide-react'
 import { useAppStore, type PageKey } from '../../store/useAppStore'
 import type { DisasterEvent } from '../../types'
 import React, { Component, useState } from 'react'
@@ -9,6 +9,7 @@ const NAV: Array<{ label: string; icon: typeof Radar; page?: PageKey; disabled?:
   { label: 'Imagery', icon: Warehouse, page: 'imagery' },
   { label: 'Reports', icon: Activity, page: 'reports' },
   { label: 'Audit', icon: ShieldCheck, page: 'audit' },
+  { label: 'V11 Test', icon: FlaskConical, page: 'v11-analysis' },
 ]
 
 /** One source of truth for every collapsed tile → identical 40x40 square */

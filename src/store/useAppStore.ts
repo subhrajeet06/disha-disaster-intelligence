@@ -5,8 +5,7 @@ import { recalculateVerifiedLocation } from '../lib/scoring'
 
 export type VerificationAction = 'confirmed' | 'rejected' | 'uncertain' | 'corrected'
 
-/** Top-level pages reachable from the sidebar / mobile nav. */
-export type PageKey = 'command' | 'scenario' | 'imagery' | 'reports' | 'audit'
+export type PageKey = 'command' | 'scenario' | 'imagery' | 'reports' | 'audit' | 'v11-analysis'
 
 export interface LocationState {
   status: VerificationStatus
