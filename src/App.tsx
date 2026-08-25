@@ -16,6 +16,7 @@ import { ImageryPage } from './components/pages/ImageryPage'
 import { ReportsPage } from './components/pages/ReportsPage'
 import { AuditPage } from './components/pages/AuditPage'
 import { V11AnalysisPage } from './components/v11/V11AnalysisPage'
+import { GISDashboard } from './components/gis/GISDashboard'
 import { useAppStore } from './store/useAppStore'
 
 const queryClient = new QueryClient({
@@ -80,6 +81,7 @@ function App() {
                 {activePage === 'reports' && <ReportsPage />}
                 {activePage === 'audit' && <AuditPage />}
                 {activePage === 'v11-analysis' && <V11AnalysisPage />}
+                {activePage === 'gis-map' && <GISDashboard />}
               </main>
             )}
           </div>

@@ -23,7 +23,10 @@ async def lifespan(app: FastAPI):
     yield
     # Cleanup on shutdown (if needed)
 
+from backend.api.routes import incidents
+
 app = FastAPI(title="DISHA V11 Inference API", lifespan=lifespan)
+app.include_router(incidents.router, prefix="/api")
 
 # Allow CORS for frontend integration
 app.add_middleware(

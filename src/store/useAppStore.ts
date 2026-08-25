@@ -5,7 +5,7 @@ import { recalculateVerifiedLocation } from '../lib/scoring'
 
 export type VerificationAction = 'confirmed' | 'rejected' | 'uncertain' | 'corrected'
 
-export type PageKey = 'command' | 'scenario' | 'imagery' | 'reports' | 'audit' | 'v11-analysis'
+export type PageKey = 'command' | 'scenario' | 'imagery' | 'reports' | 'audit' | 'v11-analysis' | 'gis-map'
 
 export interface LocationState {
   status: VerificationStatus

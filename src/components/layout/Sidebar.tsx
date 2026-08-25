@@ -1,4 +1,4 @@
-import { Activity, ChevronDown, Layers, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera, FlaskConical } from 'lucide-react'
+import { Activity, ChevronDown, Layers, Radar, ShieldCheck, Warehouse, Waves, Flame, Zap, Camera, FlaskConical, Map } from 'lucide-react'
 import { useAppStore, type PageKey } from '../../store/useAppStore'
 import type { DisasterEvent } from '../../types'
 import React, { Component, useState } from 'react'
@@ -9,6 +9,7 @@ const NAV: Array<{ label: string; icon: typeof Radar; page?: PageKey; disabled?:
   { label: 'Imagery', icon: Warehouse, page: 'imagery' },
   { label: 'Reports', icon: Activity, page: 'reports' },
   { label: 'Audit', icon: ShieldCheck, page: 'audit' },
+  { label: 'Incident Map', icon: Map, page: 'gis-map' },
   { label: 'V11 Test', icon: FlaskConical, page: 'v11-analysis' },
 ]
 

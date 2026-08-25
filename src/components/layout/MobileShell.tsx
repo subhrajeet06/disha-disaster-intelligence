@@ -16,6 +16,8 @@ const PAGE_LABEL: Record<PageKey, string> = {
   imagery: 'Imagery',
   reports: 'Reports',
   audit: 'Audit',
+  'v11-analysis': 'V11 Test',
+  'gis-map': 'Incident Map',
 }
 
 /** Small icon matching the currently active non-command page, so the bottom tab keeps its identity. */

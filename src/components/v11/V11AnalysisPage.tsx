@@ -2,9 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
     Upload, 
     RotateCw, 
-    AlertTriangle, 
     CheckCircle2,
-    BarChart3,
     Image as ImageIcon,
     Map as MapIcon,
     AlertCircle,
