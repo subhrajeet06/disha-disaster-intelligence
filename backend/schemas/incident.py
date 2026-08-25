@@ -40,6 +40,10 @@ class ImageryInfo(BaseModel):
     source: Optional[str] = None
     acquisition_date: Optional[datetime] = None
 
+class SpatialOutputInfo(BaseModel):
+    analysis_id: str
+    artifacts: Dict[str, str] = Field(default_factory=dict)
+    
 class AIAssessment(BaseModel):
     status: str = "NOT_RUN"
     model_version: Optional[str] = None
@@ -47,6 +51,7 @@ class AIAssessment(BaseModel):
     severe_regions: int = 0
     damage_area_percent: float = 0.0
     inference_timestamp: Optional[datetime] = None
+    spatial_output: Optional[SpatialOutputInfo] = None
 
 class VerificationInfo(BaseModel):
     status: str = "PENDING"

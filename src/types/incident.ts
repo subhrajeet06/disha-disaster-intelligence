@@ -37,6 +37,11 @@ export interface ImageryInfo {
   acquisition_date?: string | null
 }
 
+export interface SpatialOutputInfo {
+  analysis_id: string
+  artifacts: Record<string, string>
+}
+
 export interface AIAssessment {
   status: string
   model_version?: string | null
@@ -44,6 +49,7 @@ export interface AIAssessment {
   severe_regions: number
   damage_area_percent: number
   inference_timestamp?: string | null
+  spatial_output?: SpatialOutputInfo | null
 }
 
 export interface VerificationInfo {

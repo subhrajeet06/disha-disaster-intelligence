@@ -6,7 +6,8 @@ from backend.schemas.incident import (
     Incident, 
     IncidentCreate, 
     IncidentUpdate, 
-    IncidentStatus
+    IncidentStatus,
+    SpatialOutputInfo
 )
 from backend.repositories.incident_repository import IncidentRepository
 from backend import inference_service
@@ -102,6 +103,13 @@ class IncidentService:
             incident.ai_assessment.severe_regions = stats.get("severe_regions", 0)
             incident.ai_assessment.damage_area_percent = stats.get("damage_area_percent", 0.0)
             incident.ai_assessment.inference_timestamp = datetime.utcnow()
+            
+            analysis_id = result.get("analysis_id")
+            if analysis_id:
+                incident.ai_assessment.spatial_output = SpatialOutputInfo(
+                    analysis_id=analysis_id,
+                    artifacts=result.get("outputs", {})
+                )
             
             # Update overall status
             incident.status = IncidentStatus.AI_ASSESSED

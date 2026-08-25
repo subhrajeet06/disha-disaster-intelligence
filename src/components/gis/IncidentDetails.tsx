@@ -1,7 +1,8 @@
 import type { Incident } from '../../types/incident'
 import { X, MapPin, Activity, Calendar, Brain, AlertTriangle } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { assessIncident } from '../../services/incidentApi'
+import { assessIncident, getSpatialArtifactUrl, getIncidentImageryUrl } from '../../services/incidentApi'
+import { useState } from 'react'
 
 interface IncidentDetailsProps {
   incident: Incident
@@ -12,6 +13,7 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
   const hasCoords = typeof incident.area?.latitude === 'number' && typeof incident.area?.longitude === 'number'
   const hasImagery = !!(incident.imagery?.before_image && incident.imagery?.after_image)
   const isAssessed = incident.ai_assessment?.status === 'AI_ASSESSED'
+  const [showOverlay, setShowOverlay] = useState(true)
 
   const queryClient = useQueryClient()
   const assessMutation = useMutation({
@@ -131,6 +133,41 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
             >
               {assessMutation.isPending ? 'Updating...' : 'Re-run Assessment'}
             </button>
+
+            {incident.ai_assessment.spatial_output && (
+              <div className="mt-4 border border-edge rounded overflow-hidden">
+                <div className="bg-black/5 dark:bg-white/5 p-2 border-b border-edge flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase text-ink flex items-center">
+                    Spatial Analysis (Image-Space)
+                  </p>
+                  <label className="flex items-center space-x-1.5 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={showOverlay}
+                      onChange={(e) => setShowOverlay(e.target.checked)}
+                      className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
+                    />
+                    <span className="text-[10px] text-ink-soft">Show Overlay</span>
+                  </label>
+                </div>
+                <div className="relative aspect-square w-full bg-black/90">
+                  {/* Base Image */}
+                  <img 
+                    src={getIncidentImageryUrl(incident.id, 'after')}
+                    className="absolute inset-0 w-full h-full object-contain"
+                    alt="Post-disaster"
+                    loading="lazy"
+                  />
+                  {/* Damage Overlay */}
+                  <img 
+                    src={getSpatialArtifactUrl(incident.id, 'damage_overlay.png')}
+                    className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-200 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}
+                    alt="Damage Overlay"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

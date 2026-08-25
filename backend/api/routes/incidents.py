@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi.responses import FileResponse
+import os
 from typing import List, Dict, Any
 from backend.schemas.incident import IncidentCreate, IncidentUpdate, IncidentResponse
 from backend.services.incident_service import IncidentService
@@ -86,3 +88,71 @@ def assess_incident(
             raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{incident_id}/assessment/spatial/{artifact_name}")
+def get_spatial_artifact(
+    incident_id: str,
+    artifact_name: str,
+    service: IncidentService = Depends(get_incident_service)
+):
+    incident = service.get_incident(incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+        
+    if incident.ai_assessment.status != "AI_ASSESSED" or not incident.ai_assessment.spatial_output:
+        raise HTTPException(status_code=404, detail="Spatial analysis not available for this incident")
+        
+    spatial = incident.ai_assessment.spatial_output
+    
+    # Path traversal protection: only allow known artifacts mapped in the JSON
+    valid_artifacts = list(spatial.artifacts.values())
+    
+    # Also explicitly whitelist allowed filenames just in case
+    allowed_names = [
+        "raw_5class_mask.png", 
+        "damage_mask.png", 
+        "triage_mask.png", 
+        "damage_probability.png", 
+        "damage_overlay.png", 
+        "inference_summary.png"
+    ]
+    
+    if artifact_name not in valid_artifacts or artifact_name not in allowed_names:
+        raise HTTPException(status_code=403, detail="Invalid artifact requested")
+        
+    # Construct absolute path safely
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    artifact_path = os.path.abspath(os.path.join(project_root, "outputs", "inference", spatial.analysis_id, artifact_name))
+    
+    # Final safety check
+    if not artifact_path.startswith(os.path.abspath(os.path.join(project_root, "outputs", "inference"))):
+        raise HTTPException(status_code=403, detail="Path traversal attempt blocked")
+        
+    if not os.path.exists(artifact_path):
+        raise HTTPException(status_code=404, detail="Artifact file not found on server")
+        
+    return FileResponse(artifact_path)
+
+@router.get("/{incident_id}/imagery/{img_type}")
+def get_incident_imagery(
+    incident_id: str,
+    img_type: str,
+    service: IncidentService = Depends(get_incident_service)
+):
+    incident = service.get_incident(incident_id)
+    if not incident or not incident.imagery:
+        raise HTTPException(status_code=404, detail="Incident or imagery not found")
+        
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    
+    if img_type == "before" and incident.imagery.before_image:
+        path = os.path.abspath(os.path.join(project_root, incident.imagery.before_image))
+    elif img_type == "after" and incident.imagery.after_image:
+        path = os.path.abspath(os.path.join(project_root, incident.imagery.after_image))
+    else:
+        raise HTTPException(status_code=404, detail="Requested imagery type not found")
+        
+    if not path.startswith(project_root) or not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Image file not found on server")
+        
+    return FileResponse(path)

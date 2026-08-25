@@ -19,7 +19,7 @@ export async function fetchIncidentById(id: string): Promise<Incident> {
   return response.json()
 }
 
-export async function assessIncident(id: string): Promise<Incident> {
+export const assessIncident = async (id: string): Promise<Incident> => {
   const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/assess`, {
     method: 'POST',
   })
@@ -27,4 +27,12 @@ export async function assessIncident(id: string): Promise<Incident> {
     throw new Error(`Failed to run assessment for incident ${id}`)
   }
   return response.json()
+}
+
+export const getSpatialArtifactUrl = (id: string, artifactName: string): string => {
+  return `${API_BASE_URL}/api/incidents/${id}/assessment/spatial/${artifactName}`
+}
+
+export const getIncidentImageryUrl = (id: string, type: 'before' | 'after'): string => {
+  return `${API_BASE_URL}/api/incidents/${id}/imagery/${type}`
 }
