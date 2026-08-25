@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import datetime
 from typing import List, Optional
@@ -8,6 +9,7 @@ from backend.schemas.incident import (
     IncidentStatus
 )
 from backend.repositories.incident_repository import IncidentRepository
+from backend import inference_service
 
 class IncidentService:
     def __init__(self, repository: IncidentRepository):
@@ -64,3 +66,48 @@ class IncidentService:
 
     def delete_incident(self, incident_id: str) -> bool:
         return self.repository.delete(incident_id)
+
+    def assess_incident(self, incident_id: str) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+            
+        if not incident.imagery or not incident.imagery.before_image or not incident.imagery.after_image:
+            raise ValueError("Incident must have both before and after imagery to run assessment")
+            
+        # Safely resolve paths
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        
+        pre_path = os.path.abspath(os.path.join(project_root, incident.imagery.before_image))
+        post_path = os.path.abspath(os.path.join(project_root, incident.imagery.after_image))
+        
+        # Path traversal protection
+        if not pre_path.startswith(project_root) or not post_path.startswith(project_root):
+            raise ValueError("Invalid imagery path")
+            
+        if not os.path.exists(pre_path):
+            raise ValueError("Before image not found on server")
+        if not os.path.exists(post_path):
+            raise ValueError("After image not found on server")
+            
+        try:
+            result, out_dir = inference_service.run_analysis(pre_path, post_path)
+            
+            # Map result
+            incident.ai_assessment.status = "AI_ASSESSED"
+            incident.ai_assessment.model_version = "V11"
+            
+            stats = result.get("statistics", {})
+            incident.ai_assessment.damage_regions = stats.get("damage_regions", 0)
+            incident.ai_assessment.severe_regions = stats.get("severe_regions", 0)
+            incident.ai_assessment.damage_area_percent = stats.get("damage_area_percent", 0.0)
+            incident.ai_assessment.inference_timestamp = datetime.utcnow()
+            
+            # Update overall status
+            incident.status = IncidentStatus.AI_ASSESSED
+            
+            incident.updated_at = datetime.utcnow()
+            return self.repository.update(incident)
+        except Exception as e:
+            raise RuntimeError(f"V11 inference failed: {str(e)}")
+

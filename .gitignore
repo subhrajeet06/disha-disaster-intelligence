@@ -80,3 +80,4 @@ reports/
 
 # Temporary & junk files
 how --name-status HEAD
+.pytest_cache/

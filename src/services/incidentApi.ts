@@ -18,3 +18,13 @@ export async function fetchIncidentById(id: string): Promise<Incident> {
   }
   return response.json()
 }
+
+export async function assessIncident(id: string): Promise<Incident> {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/assess`, {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to run assessment for incident ${id}`)
+  }
+  return response.json()
+}
