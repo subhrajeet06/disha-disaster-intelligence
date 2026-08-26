@@ -7,7 +7,9 @@ from backend.schemas.incident import (
     IncidentCreate, 
     IncidentUpdate, 
     IncidentStatus,
-    SpatialOutputInfo
+    SpatialOutputInfo,
+    VerificationRequest,
+    VerificationStatus
 )
 from backend.repositories.incident_repository import IncidentRepository
 from backend import inference_service
@@ -118,4 +120,26 @@ class IncidentService:
             return self.repository.update(incident)
         except Exception as e:
             raise RuntimeError(f"V11 inference failed: {str(e)}")
+
+    def verify_incident(self, incident_id: str, verify_data: VerificationRequest) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+            
+        if incident.ai_assessment.status != "AI_ASSESSED":
+            raise ValueError("Incident must have a completed AI assessment before verification")
+            
+        if verify_data.decision not in [VerificationStatus.CONFIRMED, VerificationStatus.CORRECTED, VerificationStatus.REJECTED]:
+            raise ValueError("Invalid verification decision")
+            
+        incident.verification.status = verify_data.decision
+        incident.verification.verified = True
+        incident.verification.verified_by = verify_data.reviewer_name
+        incident.verification.correction_notes = verify_data.notes
+        incident.verification.verified_at = datetime.utcnow()
+        
+        incident.status = IncidentStatus.VERIFIED
+        incident.updated_at = datetime.utcnow()
+        
+        return self.repository.update(incident)
 

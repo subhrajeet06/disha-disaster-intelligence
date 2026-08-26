@@ -59,6 +59,8 @@ def test_get_spatial_artifact_success(mock_service_class, mock_incident, tmp_pat
             
             response = client.get("/api/incidents/test-spatial-id/assessment/spatial/damage_overlay.png")
             assert response.status_code == 200
+            
+    app.dependency_overrides.clear()
 
 @patch("backend.api.routes.incidents.IncidentService")
 def test_get_spatial_artifact_invalid_type(mock_service_class, mock_incident):
@@ -71,6 +73,8 @@ def test_get_spatial_artifact_invalid_type(mock_service_class, mock_incident):
     response = client.get("/api/incidents/test-spatial-id/assessment/spatial/invalid_secret_file.txt")
     assert response.status_code == 403
     assert "Invalid artifact requested" in response.text
+    
+    app.dependency_overrides.clear()
 
 @patch("backend.api.routes.incidents.IncidentService")
 def test_get_spatial_artifact_path_traversal(mock_service_class, mock_incident):
@@ -86,6 +90,8 @@ def test_get_spatial_artifact_path_traversal(mock_service_class, mock_incident):
     response = client.get("/api/incidents/test-spatial-id/assessment/spatial/..%2F..%2Fetc%2Fpasswd")
     # Should be 404 because FastAPI routing blocks slashes in non-path parameters
     assert response.status_code == 404
+    
+    app.dependency_overrides.clear()
 
 def test_get_imagery_success():
     # Because imagery endpoints check physical files, and we know train/images/guatemala... exists

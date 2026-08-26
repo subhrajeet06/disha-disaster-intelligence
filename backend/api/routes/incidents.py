@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.responses import FileResponse
 import os
 from typing import List, Dict, Any
-from backend.schemas.incident import IncidentCreate, IncidentUpdate, IncidentResponse
+from backend.schemas.incident import IncidentCreate, IncidentUpdate, IncidentResponse, VerificationRequest
 from backend.services.incident_service import IncidentService
 from backend.repositories.incident_repository import IncidentRepository
 
@@ -80,6 +80,23 @@ def assess_incident(
 ):
     try:
         incident = service.assess_incident(incident_id)
+        return incident
+    except ValueError as e:
+        if str(e) == "Incident not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{incident_id}/verify", response_model=IncidentResponse)
+def verify_incident(
+    incident_id: str,
+    verify_data: VerificationRequest,
+    service: IncidentService = Depends(get_incident_service)
+):
+    try:
+        incident = service.verify_incident(incident_id, verify_data)
         return incident
     except ValueError as e:
         if str(e) == "Incident not found":

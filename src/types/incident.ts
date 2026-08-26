@@ -1,3 +1,9 @@
+export type VerificationStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'CORRECTED'
+  | 'REJECTED'
+
 export type IncidentStatus =
   | 'DRAFT'
   | 'IMAGERY_READY'
@@ -53,7 +59,7 @@ export interface AIAssessment {
 }
 
 export interface VerificationInfo {
-  status: string
+  status: VerificationStatus
   verified: boolean
   verified_by?: string | null
   verified_at?: string | null

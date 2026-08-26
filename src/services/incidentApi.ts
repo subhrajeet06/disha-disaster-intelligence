@@ -36,3 +36,18 @@ export const getSpatialArtifactUrl = (id: string, artifactName: string): string 
 export const getIncidentImageryUrl = (id: string, type: 'before' | 'after'): string => {
   return `${API_BASE_URL}/api/incidents/${id}/imagery/${type}`
 }
+
+export const verifyIncident = async (id: string, payload: { decision: string; notes?: string; reviewer_name: string }): Promise<Incident> => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to verify incident ${id}`)
+  }
+  return response.json()
+}

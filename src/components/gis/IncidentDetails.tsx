@@ -1,7 +1,7 @@
 import type { Incident } from '../../types/incident'
 import { X, MapPin, Activity, Calendar, Brain, AlertTriangle } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { assessIncident, getSpatialArtifactUrl, getIncidentImageryUrl } from '../../services/incidentApi'
+import { assessIncident, getSpatialArtifactUrl, getIncidentImageryUrl, verifyIncident } from '../../services/incidentApi'
 import { useState } from 'react'
 
 interface IncidentDetailsProps {
@@ -14,11 +14,23 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
   const hasImagery = !!(incident.imagery?.before_image && incident.imagery?.after_image)
   const isAssessed = incident.ai_assessment?.status === 'AI_ASSESSED'
   const [showOverlay, setShowOverlay] = useState(true)
+  
+  const [reviewerName, setReviewerName] = useState('GIS Reviewer')
+  const [notes, setNotes] = useState('')
+  const [isEditingVerification, setIsEditingVerification] = useState(false)
 
   const queryClient = useQueryClient()
   const assessMutation = useMutation({
     mutationFn: () => assessIncident(incident.id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+    }
+  })
+
+  const verifyMutation = useMutation({
+    mutationFn: (decision: string) => verifyIncident(incident.id, { decision, reviewer_name: reviewerName, notes }),
+    onSuccess: () => {
+      setIsEditingVerification(false)
       queryClient.invalidateQueries({ queryKey: ['incidents'] })
     }
   })
@@ -168,6 +180,113 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
                 </div>
               </div>
             )}
+            
+            {/* HUMAN VERIFICATION */}
+            <div className="pt-4 mt-4 border-t border-edge space-y-3">
+              <h4 className="text-[10px] font-bold uppercase text-ink-faint flex items-center">
+                <AlertTriangle className="w-3 h-3 mr-1" /> Human Verification
+              </h4>
+              
+              {(incident.verification.status !== 'PENDING' && !isEditingVerification) ? (
+                <div className="space-y-2">
+                  <div className={`p-2 rounded border ${
+                    incident.verification.status === 'CONFIRMED' ? 'bg-green-500/10 border-green-500/20' : 
+                    incident.verification.status === 'CORRECTED' ? 'bg-yellow-500/10 border-yellow-500/20' : 
+                    'bg-red-500/10 border-red-500/20'
+                  }`}>
+                    <p className="text-[10px] uppercase font-bold text-ink-soft mb-1 flex justify-between">
+                      Decision 
+                      <span className={
+                        incident.verification.status === 'CONFIRMED' ? 'text-green-600 dark:text-green-400' : 
+                        incident.verification.status === 'CORRECTED' ? 'text-yellow-600 dark:text-yellow-400' : 
+                        'text-red-600 dark:text-red-400'
+                      }>{incident.verification.status}</span>
+                    </p>
+                    <div className="text-[10px] text-ink space-y-0.5">
+                      <p><span className="text-ink-soft">Reviewer:</span> {incident.verification.verified_by}</p>
+                      <p><span className="text-ink-soft">Date:</span> {new Date(incident.verification.verified_at!).toLocaleString()}</p>
+                      {incident.verification.correction_notes && (
+                        <p className="mt-1 pt-1 border-t border-edge/50 italic text-ink-soft">
+                          "{incident.verification.correction_notes}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setReviewerName(incident.verification.verified_by || 'GIS Reviewer')
+                      setNotes(incident.verification.correction_notes || '')
+                      setIsEditingVerification(true)
+                    }}
+                    className="text-[10px] text-primary hover:underline"
+                  >
+                    Edit Verification
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3 p-3 bg-black/5 dark:bg-white/5 rounded border border-edge">
+                  <div>
+                    <label className="text-[9px] text-ink-soft uppercase block mb-1">Reviewer Name</label>
+                    <input 
+                      type="text" 
+                      value={reviewerName}
+                      onChange={(e) => setReviewerName(e.target.value)}
+                      className="w-full bg-panel border border-edge rounded px-2 py-1.5 text-xs text-ink focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-ink-soft uppercase block mb-1">Verification Notes</label>
+                    <textarea 
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={2}
+                      className="w-full bg-panel border border-edge rounded px-2 py-1.5 text-xs text-ink focus:outline-none focus:border-primary resize-none"
+                      placeholder="Add context to your decision..."
+                    />
+                  </div>
+                  
+                  {verifyMutation.isError && (
+                    <p className="text-[10px] text-red-500 font-semibold">{verifyMutation.error?.message}</p>
+                  )}
+                  
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <button
+                      onClick={() => verifyMutation.mutate('CONFIRMED')}
+                      disabled={verifyMutation.isPending}
+                      className="flex items-center justify-center py-2 rounded bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20 text-[10px] font-bold border border-green-500/20 disabled:opacity-50 transition-colors"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => verifyMutation.mutate('CORRECTED')}
+                      disabled={verifyMutation.isPending}
+                      className="flex items-center justify-center py-2 rounded bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/20 text-[10px] font-bold border border-yellow-500/20 disabled:opacity-50 transition-colors"
+                    >
+                      Correct
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Are you sure you want to REJECT this AI assessment?')) {
+                          verifyMutation.mutate('REJECTED')
+                        }
+                      }}
+                      disabled={verifyMutation.isPending}
+                      className="flex items-center justify-center py-2 rounded bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20 text-[10px] font-bold border border-red-500/20 disabled:opacity-50 transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                  {isEditingVerification && (
+                    <button
+                      onClick={() => setIsEditingVerification(false)}
+                      className="w-full text-[10px] text-ink-soft hover:text-ink text-center pt-1"
+                    >
+                      Cancel Editing
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

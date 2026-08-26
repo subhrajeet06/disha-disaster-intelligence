@@ -53,12 +53,23 @@ class AIAssessment(BaseModel):
     inference_timestamp: Optional[datetime] = None
     spatial_output: Optional[SpatialOutputInfo] = None
 
+class VerificationStatus(str, Enum):
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    CORRECTED = "CORRECTED"
+    REJECTED = "REJECTED"
+
 class VerificationInfo(BaseModel):
-    status: str = "PENDING"
+    status: str = VerificationStatus.PENDING
     verified: bool = False
     verified_by: Optional[str] = None
     verified_at: Optional[datetime] = None
     correction_notes: Optional[str] = None
+
+class VerificationRequest(BaseModel):
+    decision: VerificationStatus
+    notes: Optional[str] = None
+    reviewer_name: str
 
 class PriorityInfo(BaseModel):
     level: Optional[str] = None  # e.g., LOW, MEDIUM, HIGH, CRITICAL
