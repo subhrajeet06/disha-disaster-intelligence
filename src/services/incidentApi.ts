@@ -77,14 +77,51 @@ export const generateResponsePlan = async (id: string): Promise<Incident> => {
 export const approveResponsePlan = async (id: string, payload: { approver_name: string }): Promise<Incident> => {
   const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/response-plan/approve`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.detail || `Failed to approve response plan for incident ${id}`)
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to approve response plan');
   }
-  return response.json()
+  return response.json();
+}
+
+export async function startResponseCoordination(id: string, payload: { started_by: string }): Promise<Incident> {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/response-plan/coordination/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to start coordination');
+  }
+  return response.json();
+}
+
+export async function updateResponseCoordination(id: string, payload: { resource_type: string, completed_quantity: number }): Promise<Incident> {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/response-plan/coordination`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to update coordination progress');
+  }
+  return response.json();
+}
+
+export async function completeResponseCoordination(id: string, payload: { completed_by: string }): Promise<Incident> {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/response-plan/coordination/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to complete coordination');
+  }
+  return response.json();
 }

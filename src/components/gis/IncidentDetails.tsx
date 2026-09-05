@@ -8,7 +8,10 @@ import {
   verifyIncident, 
   calculateIncidentPriority,
   generateResponsePlan,
-  approveResponsePlan
+  approveResponsePlan,
+  startResponseCoordination,
+  updateResponseCoordination,
+  completeResponseCoordination
 } from '../../services/incidentApi'
 import { useState } from 'react'
 
@@ -20,7 +23,7 @@ interface IncidentDetailsProps {
 export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
   const hasCoords = typeof incident.area?.latitude === 'number' && typeof incident.area?.longitude === 'number'
   const hasImagery = !!(incident.imagery?.before_image && incident.imagery?.after_image)
-  const isAssessed = incident.ai_assessment?.status === 'COMPLETED'
+  const isAssessed = incident.ai_assessment?.status === 'AI_ASSESSED' || incident.ai_assessment?.status === 'COMPLETED'
   const [showOverlay, setShowOverlay] = useState(true)
   
   const [reviewerName, setReviewerName] = useState('GIS Reviewer')
@@ -30,7 +33,10 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
   const queryClient = useQueryClient()
   const assessMutation = useMutation({
     mutationFn: () => assessIncident(incident.id),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(['incidents'], (old: Incident[] | undefined) =>
+        old?.map(inc => inc.id === incident.id ? data : inc)
+      )
       queryClient.invalidateQueries({ queryKey: ['incidents'] })
     }
   })
@@ -70,9 +76,37 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
     }
   })
 
+  const startCoordinationMutation = useMutation({
+    mutationFn: () => startResponseCoordination(incident.id, { started_by: 'Alex Coordinator' }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['incidents'], (old: Incident[] | undefined) => 
+        old?.map(inc => inc.id === incident.id ? data : inc)
+      )
+    }
+  })
+
+  const updateCoordinationMutation = useMutation({
+    mutationFn: ({ resourceType, completedQty }: { resourceType: string, completedQty: number }) => 
+      updateResponseCoordination(incident.id, { resource_type: resourceType, completed_quantity: completedQty }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['incidents'], (old: Incident[] | undefined) => 
+        old?.map(inc => inc.id === incident.id ? data : inc)
+      )
+    }
+  })
+
+  const completeCoordinationMutation = useMutation({
+    mutationFn: () => completeResponseCoordination(incident.id, { completed_by: 'Alex Coordinator' }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['incidents'], (old: Incident[] | undefined) => 
+        old?.map(inc => inc.id === incident.id ? data : inc)
+      )
+    }
+  })
+
   return (
-    <div className="flex flex-col bg-panel">
-      <div className="flex items-start justify-between px-4 py-3 border-b border-edge bg-primary/5">
+    <div className="flex flex-col h-full w-full flex-1 min-h-0 bg-panel">
+      <div className="flex items-start justify-between px-4 py-3 border-b border-edge bg-primary/5 shrink-0">
         <div>
           <h3 className="font-bold text-sm text-ink pr-4 leading-tight">{incident.name}</h3>
           <p className="text-[11px] text-ink-soft capitalize mt-0.5">{incident.disaster_type}</p>
@@ -82,7 +116,7 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
         </button>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto scroll-thin p-4 space-y-4 min-h-0">
         <div>
           <p className="text-[10px] font-bold uppercase text-ink-faint mb-1.5 flex items-center">
             <Activity className="w-3 h-3 mr-1" /> Status
@@ -481,6 +515,117 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
                       {approvePlanMutation.isPending ? 'Approving...' : 'Approve Response Plan'}
                     </button>
                   )}
+                </div>
+              )}
+            </div>
+            
+            {/* RESPONSE COORDINATION SECTION */}
+            <div className="pt-4 border-t border-edge">
+              <h4 className="text-[10px] font-bold uppercase text-ink-faint flex items-center mb-3">
+                <Activity className="w-3 h-3 mr-1" /> Response Coordination
+              </h4>
+              
+              {!incident.response_plan || incident.response_plan.status !== 'APPROVED' ? (
+                 <div className="p-3 bg-black/5 dark:bg-white/5 rounded border border-edge text-center space-y-2">
+                   <p className="text-xs text-ink-soft">
+                     Coordination is available after response-plan approval.
+                   </p>
+                 </div>
+              ) : (
+                <div className="space-y-3">
+                  {!incident.response_plan.coordination || incident.response_plan.coordination.status === 'NOT_STARTED' ? (
+                    <button
+                      onClick={() => startCoordinationMutation.mutate()}
+                      disabled={startCoordinationMutation.isPending}
+                      className="w-full rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/30 font-bold text-xs px-4 py-2 transition-colors disabled:opacity-50"
+                    >
+                      {startCoordinationMutation.isPending ? 'Starting...' : 'Start Coordination'}
+                    </button>
+                  ) : incident.response_plan.coordination.status === 'IN_PROGRESS' || incident.response_plan.coordination.status === 'COMPLETED' ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-2 rounded bg-black/5 dark:bg-white/5 border border-edge">
+                        <span className="text-xs font-bold text-ink-soft">Coordination Status</span>
+                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                          incident.response_plan.coordination.status === 'COMPLETED' ? 'bg-green-500/20 text-green-600' :
+                          'bg-blue-500/20 text-blue-600'
+                        }`}>
+                          {incident.response_plan.coordination.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-2 rounded bg-black/5 dark:bg-white/5 border border-edge">
+                        <span className="text-xs font-bold text-ink-soft">Overall Progress</span>
+                        <span className="text-xs font-bold text-ink">
+                          {incident.response_plan.coordination.overall_progress}%
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold uppercase text-ink-soft">Resource Progress</p>
+                        <div className="space-y-2">
+                          {incident.response_plan.coordination.items.map((item, idx) => {
+                            const isComplete = item.completed_quantity >= item.required_quantity;
+                            return (
+                              <div key={idx} className="p-2 rounded bg-black/5 dark:bg-white/5 text-xs">
+                                <div className="flex justify-between font-bold mb-1">
+                                  <span>{item.resource_type.replace(/_/g, ' ')}</span>
+                                  <span className={isComplete ? 'text-green-500' : 'text-blue-500'}>
+                                    {item.completed_quantity} / {item.required_quantity}
+                                  </span>
+                                </div>
+                                <div className="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full overflow-hidden mt-1 mb-2">
+                                  <div 
+                                    className={`h-full ${isComplete ? 'bg-green-500' : 'bg-blue-500'}`} 
+                                    style={{ width: `${Math.min(100, (item.completed_quantity / item.required_quantity) * 100)}%` }}
+                                  />
+                                </div>
+                                {incident.response_plan.coordination.status === 'IN_PROGRESS' && !isComplete && (
+                                  <div className="flex justify-end gap-2 mt-2">
+                                    <button 
+                                      onClick={() => updateCoordinationMutation.mutate({ resourceType: item.resource_type, completedQty: item.completed_quantity + 1 })}
+                                      disabled={updateCoordinationMutation.isPending}
+                                      className="px-2 py-1 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 rounded text-[10px] font-bold transition-colors"
+                                    >
+                                      +1
+                                    </button>
+                                    <button 
+                                      onClick={() => updateCoordinationMutation.mutate({ resourceType: item.resource_type, completedQty: item.required_quantity })}
+                                      disabled={updateCoordinationMutation.isPending}
+                                      className="px-2 py-1 bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/30 rounded text-[10px] font-bold transition-colors"
+                                    >
+                                      Mark Complete
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      {incident.response_plan.coordination.status === 'IN_PROGRESS' && (
+                        <button
+                          onClick={() => completeCoordinationMutation.mutate()}
+                          disabled={completeCoordinationMutation.isPending || incident.response_plan.coordination.items.some(i => i.completed_quantity < i.required_quantity)}
+                          className="w-full rounded bg-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/30 font-bold text-xs px-4 py-2 mt-2 transition-colors disabled:opacity-50"
+                        >
+                          {completeCoordinationMutation.isPending ? 'Marking Complete...' : 'Mark Coordination Complete'}
+                        </button>
+                      )}
+                      
+                      {incident.response_plan.coordination.status === 'COMPLETED' && (
+                        <div className="p-2 bg-green-500/10 border border-green-500/20 rounded mt-2">
+                          <p className="text-[10px] text-green-600 dark:text-green-400 font-bold">
+                            Completed by: {incident.response_plan.coordination.completed_by}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                  
+                  <p className="text-[9px] text-ink-faint text-center leading-tight">
+                    * Prototype Coordination: No actual real-world dispatch occurs.
+                  </p>
                 </div>
               )}
             </div>

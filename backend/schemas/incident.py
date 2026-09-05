@@ -144,6 +144,28 @@ class UnmetRequirement(BaseModel):
     type: ResourceType
     unmet_quantity: int
 
+class CoordinationStatus(str, Enum):
+    NOT_STARTED = "NOT_STARTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+
+class CoordinationItem(BaseModel):
+    resource_type: ResourceType
+    required_quantity: int
+    completed_quantity: int = 0
+
+class CoordinationInfo(BaseModel):
+    status: CoordinationStatus = CoordinationStatus.NOT_STARTED
+    items: List[CoordinationItem] = Field(default_factory=list)
+    overall_progress: float = 0.0
+    started_at: Optional[datetime] = None
+    started_by: Optional[str] = None
+    completed_at: Optional[datetime] = None
+    completed_by: Optional[str] = None
+    cancelled_at: Optional[datetime] = None
+    cancelled_by: Optional[str] = None
+
 class ResponsePlanStatus(str, Enum):
     NOT_GENERATED = "NOT_GENERATED"
     DRAFT = "DRAFT"
@@ -161,6 +183,7 @@ class ResponsePlanInfo(BaseModel):
     updated_at: Optional[datetime] = None
     approved_by: Optional[str] = None
     approved_at: Optional[datetime] = None
+    coordination: CoordinationInfo = Field(default_factory=CoordinationInfo)
 
 class Incident(BaseModel):
     id: str
@@ -181,3 +204,16 @@ class Incident(BaseModel):
 
 class IncidentResponse(Incident):
     pass
+
+class ApprovePlanRequest(BaseModel):
+    approver_name: str
+
+class CoordinationStartRequest(BaseModel):
+    started_by: str
+
+class CoordinationProgressUpdate(BaseModel):
+    resource_type: ResourceType
+    completed_quantity: int
+
+class CoordinationCompleteRequest(BaseModel):
+    completed_by: str

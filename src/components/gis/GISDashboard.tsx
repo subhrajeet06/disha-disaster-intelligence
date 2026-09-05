@@ -38,7 +38,7 @@ export function GISDashboard() {
         
         {/* Incident Details Floating Panel */}
         {selectedIncident && (
-          <div className="absolute top-4 right-4 z-20 w-[340px] max-h-[calc(100%-2rem)] shadow-2xl rounded-2xl bg-panel overflow-y-auto overflow-x-hidden border border-edge">
+          <div className="absolute top-4 right-4 z-20 w-[340px] max-h-[calc(100%-2rem)] flex flex-col shadow-2xl rounded-2xl bg-panel overflow-hidden border border-edge">
             <IncidentDetails 
               incident={selectedIncident} 
               onClose={() => setSelectedIncidentId(null)}

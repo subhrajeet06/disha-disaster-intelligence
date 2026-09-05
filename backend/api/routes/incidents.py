@@ -2,7 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.responses import FileResponse
 import os
 from typing import List, Dict, Any
-from backend.schemas.incident import IncidentCreate, IncidentUpdate, IncidentResponse, VerificationRequest
+from backend.schemas.incident import (
+    IncidentCreate, IncidentUpdate, IncidentResponse,
+    VerificationRequest, ApprovePlanRequest,
+    CoordinationStartRequest, CoordinationProgressUpdate, CoordinationCompleteRequest
+)
 from backend.services.incident_service import IncidentService
 from backend.repositories.incident_repository import IncidentRepository
 
@@ -158,6 +162,58 @@ def approve_response_plan(
             raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{incident_id}/response-plan/coordination/start", response_model=IncidentResponse)
+def start_coordination(
+    incident_id: str,
+    payload: CoordinationStartRequest,
+    service: IncidentService = Depends(get_incident_service)
+):
+    try:
+        incident = service.start_coordination(incident_id, payload.started_by)
+        return incident
+    except ValueError as e:
+        if str(e) == "Incident not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.patch("/{incident_id}/response-plan/coordination", response_model=IncidentResponse)
+def update_coordination_progress(
+    incident_id: str,
+    payload: CoordinationProgressUpdate,
+    service: IncidentService = Depends(get_incident_service)
+):
+    try:
+        incident = service.update_coordination_progress(incident_id, payload.resource_type, payload.completed_quantity)
+        return incident
+    except ValueError as e:
+        if str(e) == "Incident not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{incident_id}/response-plan/coordination/complete", response_model=IncidentResponse)
+def complete_coordination(
+    incident_id: str,
+    payload: CoordinationCompleteRequest,
+    service: IncidentService = Depends(get_incident_service)
+):
+    try:
+        incident = service.complete_coordination(incident_id, payload.completed_by)
+        return incident
+    except ValueError as e:
+        if str(e) == "Incident not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/{incident_id}/assessment/spatial/{artifact_name}")
 def get_spatial_artifact(

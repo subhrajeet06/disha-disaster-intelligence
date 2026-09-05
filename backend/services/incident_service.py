@@ -9,7 +9,13 @@ from backend.schemas.incident import (
     IncidentStatus,
     SpatialOutputInfo,
     VerificationRequest,
-    VerificationStatus
+    VerificationStatus,
+    ResponsePlanStatus,
+    ResponsePlanStatus,
+    CoordinationStatus,
+    CoordinationItem,
+    CoordinationProgressUpdate,
+    ResourceType
 )
 from backend.repositories.incident_repository import IncidentRepository
 from backend import inference_service
@@ -186,6 +192,91 @@ class IncidentService:
         plan = ResponseService.approve_response_plan(incident, approver_name)
         incident.response_plan = plan
         incident.updated_at = datetime.utcnow()
+        
+        return self.repository.update(incident)
+
+    def start_coordination(self, incident_id: str, started_by: str) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+        
+        if incident.response_plan.status != ResponsePlanStatus.APPROVED:
+            raise ValueError("Response plan must be APPROVED to start coordination")
+            
+        if incident.response_plan.coordination.status != CoordinationStatus.NOT_STARTED:
+            raise ValueError(f"Coordination already started or in state: {incident.response_plan.coordination.status}")
+            
+        items = []
+        for match in incident.response_plan.resource_matches:
+            if match.recommended > 0:
+                items.append(CoordinationItem(
+                    resource_type=match.type,
+                    required_quantity=match.recommended,
+                    completed_quantity=0
+                ))
+                
+        incident.response_plan.coordination.items = items
+        incident.response_plan.coordination.status = CoordinationStatus.IN_PROGRESS
+        incident.response_plan.coordination.overall_progress = 0.0
+        incident.response_plan.coordination.started_at = datetime.utcnow()
+        incident.response_plan.coordination.started_by = started_by
+        
+        return self.repository.update(incident)
+
+    def update_coordination_progress(self, incident_id: str, resource_type: ResourceType, completed_quantity: int) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+            
+        if incident.response_plan.status == ResponsePlanStatus.STALE:
+            raise ValueError("Response plan is STALE. Coordination is locked.")
+            
+        coord = incident.response_plan.coordination
+        if coord.status != CoordinationStatus.IN_PROGRESS:
+            raise ValueError(f"Cannot update progress in state: {coord.status}")
+            
+        if completed_quantity < 0:
+            raise ValueError("Completed quantity cannot be negative")
+            
+        target_item = next((item for item in coord.items if item.resource_type == resource_type), None)
+        if not target_item:
+            raise ValueError(f"Resource type {resource_type} not found in coordination plan")
+            
+        if completed_quantity > target_item.required_quantity:
+            raise ValueError(f"Completed quantity ({completed_quantity}) cannot exceed required quantity ({target_item.required_quantity})")
+            
+        target_item.completed_quantity = completed_quantity
+        
+        total_required = sum(item.required_quantity for item in coord.items)
+        total_completed = sum(item.completed_quantity for item in coord.items)
+        
+        if total_required > 0:
+            coord.overall_progress = round((total_completed / total_required) * 100, 2)
+        else:
+            coord.overall_progress = 100.0
+            
+        return self.repository.update(incident)
+        
+    def complete_coordination(self, incident_id: str, completed_by: str) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+            
+        if incident.response_plan.status == ResponsePlanStatus.STALE:
+            raise ValueError("Response plan is STALE. Coordination is locked.")
+            
+        coord = incident.response_plan.coordination
+        if coord.status != CoordinationStatus.IN_PROGRESS:
+            raise ValueError(f"Cannot complete coordination in state: {coord.status}")
+            
+        for item in coord.items:
+            if item.completed_quantity < item.required_quantity:
+                raise ValueError("Cannot complete coordination while required quantities remain incomplete")
+                
+        coord.status = CoordinationStatus.COMPLETED
+        coord.completed_at = datetime.utcnow()
+        coord.completed_by = completed_by
+        coord.overall_progress = 100.0
         
         return self.repository.update(incident)
 

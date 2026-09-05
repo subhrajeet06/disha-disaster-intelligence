@@ -115,6 +115,30 @@ export interface UnmetRequirement {
   unmet_quantity: number
 }
 
+export type CoordinationStatus = 
+  | 'NOT_STARTED' 
+  | 'IN_PROGRESS' 
+  | 'COMPLETED' 
+  | 'CANCELLED'
+
+export interface CoordinationItem {
+  resource_type: ResourceType
+  required_quantity: number
+  completed_quantity: number
+}
+
+export interface CoordinationInfo {
+  status: CoordinationStatus
+  items: CoordinationItem[]
+  overall_progress: number
+  started_at?: string | null
+  started_by?: string | null
+  completed_at?: string | null
+  completed_by?: string | null
+  cancelled_at?: string | null
+  cancelled_by?: string | null
+}
+
 export type ResponsePlanStatus =
   | 'NOT_GENERATED'
   | 'DRAFT'
@@ -132,6 +156,8 @@ export interface ResponsePlanInfo {
   updated_at?: string | null
   approved_by?: string | null
   approved_at?: string | null
+  coordination: CoordinationInfo
+
 }
 
 export interface FieldResponseInfo {
