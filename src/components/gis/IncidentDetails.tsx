@@ -1,7 +1,7 @@
 import type { Incident } from '../../types/incident'
 import { X, MapPin, Activity, Calendar, Brain, AlertTriangle } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { assessIncident, getSpatialArtifactUrl, getIncidentImageryUrl, verifyIncident } from '../../services/incidentApi'
+import { assessIncident, getSpatialArtifactUrl, getIncidentImageryUrl, verifyIncident, calculateIncidentPriority } from '../../services/incidentApi'
 import { useState } from 'react'
 
 interface IncidentDetailsProps {
@@ -31,6 +31,13 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
     mutationFn: (decision: string) => verifyIncident(incident.id, { decision, reviewer_name: reviewerName, notes }),
     onSuccess: () => {
       setIsEditingVerification(false)
+      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+    }
+  })
+
+  const priorityMutation = useMutation({
+    mutationFn: () => calculateIncidentPriority(incident.id),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['incidents'] })
     }
   })
@@ -285,6 +292,71 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
                     </button>
                   )}
                 </div>
+              )}
+            </div>
+            
+            {/* OPERATIONAL PRIORITY */}
+            <div className="pt-4 mt-4 border-t border-edge space-y-3">
+              <h4 className="text-[10px] font-bold uppercase text-ink-faint flex items-center">
+                <Activity className="w-3 h-3 mr-1" /> Operational Priority
+              </h4>
+              
+              {incident.priority?.status === 'CALCULATED' && incident.priority?.level ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded border border-edge bg-black/5 dark:bg-white/5">
+                    <div>
+                      <p className="text-[10px] text-ink-soft uppercase mb-0.5 font-bold">Risk Score</p>
+                      <p className="text-xl font-bold text-ink">{incident.priority.risk_score} <span className="text-xs text-ink-soft font-normal">/ 100</span></p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-ink-soft uppercase mb-0.5 font-bold">Priority</p>
+                      <div className={`px-2 py-1 rounded text-xs font-bold uppercase ${
+                        incident.priority.level === 'CRITICAL' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
+                        incident.priority.level === 'HIGH' ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' :
+                        incident.priority.level === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400' :
+                        'bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                      }`}>
+                        {incident.priority.level}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-ink-soft">Why this priority?</p>
+                    <div className="space-y-1">
+                      {incident.priority.factors.map((factor, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs p-1.5 rounded bg-black/5 dark:bg-white/5">
+                          <div>
+                            <span className="text-ink-soft">{factor.name}</span>
+                            <span className="ml-2 font-medium text-ink">{factor.value}</span>
+                          </div>
+                          <span className="font-bold text-green-600 dark:text-green-400">+{factor.contribution}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-black/5 dark:bg-white/5 rounded border border-edge text-center space-y-2">
+                  <p className="text-xs text-ink-soft">
+                    {incident.verification.status === 'PENDING' ? 'Human verification is required before final priority can be calculated.' :
+                     incident.verification.status === 'REJECTED' ? 'Unable to calculate priority from a rejected assessment.' :
+                     incident.priority?.status === 'STALE' ? 'Verification has been updated. Please recalculate priority.' :
+                     'No operational priority has been assigned.'}
+                  </p>
+                </div>
+              )}
+              
+              <button
+                onClick={() => priorityMutation.mutate()}
+                disabled={priorityMutation.isPending || incident.verification.status === 'PENDING' || incident.verification.status === 'REJECTED'}
+                className="w-full flex items-center justify-center gap-2 rounded bg-primary/10 text-primary hover:bg-primary/20 font-bold text-xs px-4 py-2 mt-2 transition-colors disabled:opacity-50"
+              >
+                {priorityMutation.isPending ? 'Calculating...' : (incident.priority?.status === 'STALE' ? 'Recalculate Priority' : 'Calculate Priority')}
+              </button>
+              
+              {priorityMutation.isError && (
+                <p className="text-[10px] text-red-500 font-semibold text-center mt-1">Unable to calculate priority. Please try again.</p>
               )}
             </div>
           </div>

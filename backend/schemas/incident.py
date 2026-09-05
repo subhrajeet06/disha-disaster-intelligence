@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 from datetime import datetime
 
@@ -71,10 +71,24 @@ class VerificationRequest(BaseModel):
     notes: Optional[str] = None
     reviewer_name: str
 
+class PriorityLevel(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+class PriorityFactor(BaseModel):
+    name: str
+    value: str
+    contribution: int
+
 class PriorityInfo(BaseModel):
-    level: Optional[str] = None  # e.g., LOW, MEDIUM, HIGH, CRITICAL
-    score: Optional[float] = None
-    reason: Optional[str] = None
+    status: str = "PENDING"  # PENDING, CALCULATED, STALE
+    risk_score: Optional[int] = None
+    level: Optional[PriorityLevel] = None
+    factors: List[PriorityFactor] = Field(default_factory=list)
+    calculated_at: Optional[datetime] = None
+    scoring_version: Optional[str] = "F1"
 
 class FieldResponseInfo(BaseModel):
     assigned: bool = False

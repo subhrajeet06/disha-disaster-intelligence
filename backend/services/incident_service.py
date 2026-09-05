@@ -13,6 +13,7 @@ from backend.schemas.incident import (
 )
 from backend.repositories.incident_repository import IncidentRepository
 from backend import inference_service
+from backend.services.priority_service import PriorityService
 
 class IncidentService:
     def __init__(self, repository: IncidentRepository):
@@ -138,7 +139,22 @@ class IncidentService:
         incident.verification.correction_notes = verify_data.notes
         incident.verification.verified_at = datetime.utcnow()
         
+        # Mark priority stale if verification is updated
+        if incident.priority.status == "CALCULATED":
+            incident.priority.status = "STALE"
+        
         incident.status = IncidentStatus.VERIFIED
+        incident.updated_at = datetime.utcnow()
+        
+        return self.repository.update(incident)
+
+    def calculate_incident_priority(self, incident_id: str) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+            
+        priority_info = PriorityService.calculate_priority(incident)
+        incident.priority = priority_info
         incident.updated_at = datetime.utcnow()
         
         return self.repository.update(incident)

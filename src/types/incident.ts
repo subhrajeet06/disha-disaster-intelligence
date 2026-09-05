@@ -66,10 +66,25 @@ export interface VerificationInfo {
   correction_notes?: string | null
 }
 
+export type PriorityLevel =
+  | 'LOW'
+  | 'MEDIUM'
+  | 'HIGH'
+  | 'CRITICAL'
+
+export interface PriorityFactor {
+  name: string
+  value: string
+  contribution: number
+}
+
 export interface PriorityInfo {
-  level?: string | null
-  score?: number | null
-  reason?: string | null
+  status: string // 'PENDING' | 'CALCULATED' | 'STALE'
+  risk_score?: number | null
+  level?: PriorityLevel | null
+  factors: PriorityFactor[]
+  calculated_at?: string | null
+  scoring_version?: string | null
 }
 
 export interface FieldResponseInfo {

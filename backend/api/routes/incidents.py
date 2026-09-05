@@ -106,6 +106,22 @@ def verify_incident(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/{incident_id}/priority", response_model=IncidentResponse)
+def calculate_priority(
+    incident_id: str,
+    service: IncidentService = Depends(get_incident_service)
+):
+    try:
+        incident = service.calculate_incident_priority(incident_id)
+        return incident
+    except ValueError as e:
+        if str(e) == "Incident not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/{incident_id}/assessment/spatial/{artifact_name}")
 def get_spatial_artifact(
     incident_id: str,

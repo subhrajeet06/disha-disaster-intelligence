@@ -51,3 +51,14 @@ export const verifyIncident = async (id: string, payload: { decision: string; no
   }
   return response.json()
 }
+
+export const calculateIncidentPriority = async (id: string): Promise<Incident> => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/priority`, {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to calculate priority for incident ${id}`)
+  }
+  return response.json()
+}
