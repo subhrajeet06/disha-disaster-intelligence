@@ -62,3 +62,29 @@ export const calculateIncidentPriority = async (id: string): Promise<Incident> =
   }
   return response.json()
 }
+
+export const generateResponsePlan = async (id: string): Promise<Incident> => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/response-plan`, {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to generate response plan for incident ${id}`)
+  }
+  return response.json()
+}
+
+export const approveResponsePlan = async (id: string, payload: { approver_name: string }): Promise<Incident> => {
+  const response = await fetch(`${API_BASE_URL}/api/incidents/${id}/response-plan/approve`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to approve response plan for incident ${id}`)
+  }
+  return response.json()
+}

@@ -87,6 +87,53 @@ export interface PriorityInfo {
   scoring_version?: string | null
 }
 
+export type ResourceType =
+  | 'MEDICAL_TEAM'
+  | 'SEARCH_AND_RESCUE'
+  | 'FIRE_RESPONSE'
+  | 'EVACUATION_SUPPORT'
+  | 'SHELTER'
+  | 'FOOD_WATER'
+  | 'ROAD_CLEARANCE'
+
+export interface ResponseRequirement {
+  type: ResourceType
+  recommended_quantity: number
+  reason: string
+  priority: PriorityLevel
+}
+
+export interface ResourceMatch {
+  type: ResourceType
+  required: number
+  available: number
+  recommended: number
+}
+
+export interface UnmetRequirement {
+  type: ResourceType
+  unmet_quantity: number
+}
+
+export type ResponsePlanStatus =
+  | 'NOT_GENERATED'
+  | 'DRAFT'
+  | 'READY_FOR_APPROVAL'
+  | 'APPROVED'
+  | 'STALE'
+  | 'REJECTED'
+
+export interface ResponsePlanInfo {
+  status: ResponsePlanStatus
+  requirements: ResponseRequirement[]
+  resource_matches: ResourceMatch[]
+  unmet_requirements: UnmetRequirement[]
+  created_at?: string | null
+  updated_at?: string | null
+  approved_by?: string | null
+  approved_at?: string | null
+}
+
 export interface FieldResponseInfo {
   assigned: boolean
   assigned_team?: string | null
@@ -107,6 +154,7 @@ export interface Incident {
   imagery: ImageryInfo
   ai_assessment: AIAssessment
   verification: VerificationInfo
-  priority: PriorityInfo
-  field_response: FieldResponseInfo
+  priority?: PriorityInfo | null
+  field_response?: FieldResponseInfo | null
+  response_plan?: ResponsePlanInfo | null
 }

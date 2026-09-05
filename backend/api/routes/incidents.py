@@ -122,6 +122,43 @@ def calculate_priority(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+from pydantic import BaseModel
+class ApprovePlanRequest(BaseModel):
+    approver_name: str
+
+@router.post("/{incident_id}/response-plan", response_model=IncidentResponse)
+def generate_response_plan(
+    incident_id: str,
+    service: IncidentService = Depends(get_incident_service)
+):
+    try:
+        incident = service.generate_response_plan(incident_id)
+        return incident
+    except ValueError as e:
+        if str(e) == "Incident not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{incident_id}/response-plan/approve", response_model=IncidentResponse)
+def approve_response_plan(
+    incident_id: str,
+    payload: ApprovePlanRequest,
+    service: IncidentService = Depends(get_incident_service)
+):
+    try:
+        incident = service.approve_response_plan(incident_id, payload.approver_name)
+        return incident
+    except ValueError as e:
+        if str(e) == "Incident not found":
+            raise HTTPException(status_code=404, detail=str(e))
+        else:
+            raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/{incident_id}/assessment/spatial/{artifact_name}")
 def get_spatial_artifact(
     incident_id: str,

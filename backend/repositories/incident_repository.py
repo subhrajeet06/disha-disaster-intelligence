@@ -11,21 +11,21 @@ class IncidentRepository:
     def __init__(self):
         os.makedirs(DATA_DIR, exist_ok=True)
         if not os.path.exists(INCIDENTS_FILE):
-            with open(INCIDENTS_FILE, 'w') as f:
+            with open(INCIDENTS_FILE, 'w', encoding='utf-8') as f:
                 json.dump([], f)
                 
     def _read_data(self) -> List[Incident]:
         try:
-            with open(INCIDENTS_FILE, 'r') as f:
+            with open(INCIDENTS_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return [Incident(**item) for item in data]
         except (json.JSONDecodeError, ValidationError):
             return []
             
     def _write_data(self, incidents: List[Incident]):
-        with open(INCIDENTS_FILE, 'w') as f:
+        with open(INCIDENTS_FILE, 'w', encoding='utf-8') as f:
             # We serialize using Pydantic's model_dump (Pydantic v2) or dict() (Pydantic v1)
-            json.dump([incident.model_dump(mode='json') if hasattr(incident, 'model_dump') else incident.dict() for incident in incidents], f, indent=2)
+            json.dump([incident.model_dump(mode='json') if hasattr(incident, 'model_dump') else incident.dict() for incident in incidents], f, indent=2, ensure_ascii=False)
 
     def get_all(self) -> List[Incident]:
         return self._read_data()

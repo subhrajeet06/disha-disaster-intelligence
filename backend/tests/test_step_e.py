@@ -6,15 +6,21 @@ import json
 
 client = TestClient(app)
 
+import tempfile
+import shutil
+
 @pytest.fixture
 def clean_db():
-    db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'incidents.json'))
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    with open(db_path, 'w') as f:
+    temp_dir = tempfile.mkdtemp()
+    temp_file = os.path.join(temp_dir, 'incidents.json')
+    with open(temp_file, 'w') as f:
         json.dump([], f)
-    yield
-    with open(db_path, 'w') as f:
-        json.dump([], f)
+    
+    from unittest.mock import patch
+    with patch("backend.repositories.incident_repository.INCIDENTS_FILE", temp_file):
+        yield
+        
+    shutil.rmtree(temp_dir)
 
 def test_verify_incident_success(clean_db):
     # 1. Create

@@ -1,7 +1,15 @@
 import type { Incident } from '../../types/incident'
-import { X, MapPin, Activity, Calendar, Brain, AlertTriangle } from 'lucide-react'
+import { X, MapPin, Activity, Calendar, Brain, AlertTriangle, ShieldAlert } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { assessIncident, getSpatialArtifactUrl, getIncidentImageryUrl, verifyIncident, calculateIncidentPriority } from '../../services/incidentApi'
+import { 
+  assessIncident, 
+  getSpatialArtifactUrl, 
+  getIncidentImageryUrl, 
+  verifyIncident, 
+  calculateIncidentPriority,
+  generateResponsePlan,
+  approveResponsePlan
+} from '../../services/incidentApi'
 import { useState } from 'react'
 
 interface IncidentDetailsProps {
@@ -12,7 +20,7 @@ interface IncidentDetailsProps {
 export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
   const hasCoords = typeof incident.area?.latitude === 'number' && typeof incident.area?.longitude === 'number'
   const hasImagery = !!(incident.imagery?.before_image && incident.imagery?.after_image)
-  const isAssessed = incident.ai_assessment?.status === 'AI_ASSESSED'
+  const isAssessed = incident.ai_assessment?.status === 'COMPLETED'
   const [showOverlay, setShowOverlay] = useState(true)
   
   const [reviewerName, setReviewerName] = useState('GIS Reviewer')
@@ -37,8 +45,28 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
 
   const priorityMutation = useMutation({
     mutationFn: () => calculateIncidentPriority(incident.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incidents'] })
+    onSuccess: (data) => {
+      queryClient.setQueryData(['incidents'], (old: Incident[] | undefined) => 
+        old?.map(inc => inc.id === incident.id ? data : inc)
+      )
+    }
+  })
+
+  const generatePlanMutation = useMutation({
+    mutationFn: () => generateResponsePlan(incident.id),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['incidents'], (old: Incident[] | undefined) => 
+        old?.map(inc => inc.id === incident.id ? data : inc)
+      )
+    }
+  })
+
+  const approvePlanMutation = useMutation({
+    mutationFn: () => approveResponsePlan(incident.id, { approver_name: 'Jane Doe (Step G Reviewer)' }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['incidents'], (old: Incident[] | undefined) => 
+        old?.map(inc => inc.id === incident.id ? data : inc)
+      )
     }
   })
 
@@ -357,6 +385,103 @@ export function IncidentDetails({ incident, onClose }: IncidentDetailsProps) {
               
               {priorityMutation.isError && (
                 <p className="text-[10px] text-red-500 font-semibold text-center mt-1">Unable to calculate priority. Please try again.</p>
+              )}
+            </div>
+            
+            {/* RESPONSE PLAN SECTION */}
+            <div className="pt-4 border-t border-edge">
+              <h4 className="text-[10px] font-bold uppercase text-ink-faint flex items-center mb-3">
+                <ShieldAlert className="w-3 h-3 mr-1" /> Response Plan
+              </h4>
+              
+              {!incident.response_plan || incident.response_plan.status === 'NOT_GENERATED' ? (
+                 <div className="p-3 bg-black/5 dark:bg-white/5 rounded border border-edge text-center space-y-2">
+                   <p className="text-xs text-ink-soft">
+                     {incident.priority?.status !== 'CALCULATED' ? 'Human verification and current priority are required.' :
+                      'No response plan generated yet.'}
+                   </p>
+                 </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-2 rounded bg-black/5 dark:bg-white/5 border border-edge">
+                    <span className="text-xs font-bold text-ink-soft">Status</span>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                      incident.response_plan.status === 'APPROVED' ? 'bg-green-500/20 text-green-600' :
+                      incident.response_plan.status === 'STALE' ? 'bg-red-500/20 text-red-600' :
+                      'bg-blue-500/20 text-blue-600'
+                    }`}>
+                      {incident.response_plan.status}
+                    </span>
+                  </div>
+                  
+                  {incident.response_plan.status === 'STALE' && (
+                    <p className="text-[10px] text-red-500 font-bold bg-red-500/10 p-2 rounded">
+                      This response plan is outdated due to changes in verification or priority. Generate a new plan.
+                    </p>
+                  )}
+                  
+                  {/* Requirements & Matches */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-ink-soft">Resource Requirements</p>
+                    <div className="space-y-2">
+                      {incident.response_plan.resource_matches.map((match, idx) => {
+                        const req = incident.response_plan!.requirements.find(r => r.type === match.type);
+                        return (
+                          <div key={idx} className="p-2 rounded bg-black/5 dark:bg-white/5 text-xs">
+                            <div className="flex justify-between font-bold mb-1">
+                              <span>{match.type.replace(/_/g, ' ')}</span>
+                              <span className={match.recommended < match.required ? 'text-orange-500' : 'text-green-500'}>
+                                {match.recommended} / {match.required} recommended
+                              </span>
+                            </div>
+                            {req && <p className="text-[10px] text-ink-faint italic leading-tight">{req.reason}</p>}
+                            <div className="flex justify-between mt-1 pt-1 border-t border-edge/50 text-[10px] text-ink-soft">
+                              <span>Available: {match.available}</span>
+                              {match.recommended < match.required && (
+                                <span className="text-red-500 font-bold">Unmet: {match.required - match.recommended}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {incident.response_plan.status === 'APPROVED' && (
+                    <div className="p-2 bg-green-500/10 border border-green-500/20 rounded mt-2">
+                      <p className="text-[10px] text-green-600 dark:text-green-400 font-bold">
+                        Approved by: {incident.response_plan.approved_by}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <p className="text-[9px] text-ink-faint text-center leading-tight">
+                    * Response plan implies recommendations only and does not trigger real-world dispatch.
+                  </p>
+                </div>
+              )}
+              
+              {(!incident.response_plan || incident.response_plan.status !== 'APPROVED') && (
+                <div className="flex flex-col gap-2 mt-3">
+                  <button
+                    onClick={() => generatePlanMutation.mutate()}
+                    disabled={generatePlanMutation.isPending || incident.priority?.status !== 'CALCULATED'}
+                    className="w-full rounded bg-primary/10 text-primary hover:bg-primary/20 font-bold text-xs px-4 py-2 transition-colors disabled:opacity-50"
+                  >
+                    {generatePlanMutation.isPending ? 'Generating...' : 
+                     (incident.response_plan?.status === 'STALE' ? 'Regenerate Plan' : 'Generate Response Plan')}
+                  </button>
+                  
+                  {incident.response_plan?.status === 'READY_FOR_APPROVAL' && (
+                    <button
+                      onClick={() => approvePlanMutation.mutate()}
+                      disabled={approvePlanMutation.isPending}
+                      className="w-full rounded bg-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/30 font-bold text-xs px-4 py-2 transition-colors disabled:opacity-50"
+                    >
+                      {approvePlanMutation.isPending ? 'Approving...' : 'Approve Response Plan'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>

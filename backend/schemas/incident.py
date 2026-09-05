@@ -110,6 +110,58 @@ class IncidentUpdate(BaseModel):
     area: Optional[GeographicInfo] = None
     imagery: Optional[ImageryInfo] = None
 
+class ResourceType(str, Enum):
+    MEDICAL_TEAM = "MEDICAL_TEAM"
+    SEARCH_AND_RESCUE = "SEARCH_AND_RESCUE"
+    FIRE_RESPONSE = "FIRE_RESPONSE"
+    EVACUATION_SUPPORT = "EVACUATION_SUPPORT"
+    SHELTER = "SHELTER"
+    FOOD_WATER = "FOOD_WATER"
+    ROAD_CLEARANCE = "ROAD_CLEARANCE"
+
+class Resource(BaseModel):
+    id: str
+    name: str
+    type: ResourceType
+    quantity_total: int
+    quantity_available: int
+    status: str = "AVAILABLE"
+    location: str
+
+class ResponseRequirement(BaseModel):
+    type: ResourceType
+    recommended_quantity: int
+    reason: str
+    priority: PriorityLevel
+
+class ResourceMatch(BaseModel):
+    type: ResourceType
+    required: int
+    available: int
+    recommended: int
+
+class UnmetRequirement(BaseModel):
+    type: ResourceType
+    unmet_quantity: int
+
+class ResponsePlanStatus(str, Enum):
+    NOT_GENERATED = "NOT_GENERATED"
+    DRAFT = "DRAFT"
+    READY_FOR_APPROVAL = "READY_FOR_APPROVAL"
+    APPROVED = "APPROVED"
+    STALE = "STALE"
+    REJECTED = "REJECTED"
+
+class ResponsePlanInfo(BaseModel):
+    status: ResponsePlanStatus = ResponsePlanStatus.NOT_GENERATED
+    requirements: List[ResponseRequirement] = Field(default_factory=list)
+    resource_matches: List[ResourceMatch] = Field(default_factory=list)
+    unmet_requirements: List[UnmetRequirement] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+
 class Incident(BaseModel):
     id: str
     name: str
@@ -125,6 +177,7 @@ class Incident(BaseModel):
     verification: VerificationInfo = Field(default_factory=VerificationInfo)
     priority: PriorityInfo = Field(default_factory=PriorityInfo)
     field_response: FieldResponseInfo = Field(default_factory=FieldResponseInfo)
+    response_plan: ResponsePlanInfo = Field(default_factory=ResponsePlanInfo)
 
 class IncidentResponse(Incident):
     pass

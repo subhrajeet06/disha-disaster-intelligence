@@ -19,7 +19,7 @@ def clean_db():
         json.dump([], f)
     
     from unittest.mock import patch
-    with patch("backend.repositories.incident_repository.IncidentRepository.FILE_PATH", temp_file):
+    with patch("backend.repositories.incident_repository.INCIDENTS_FILE", temp_file):
         yield
         
     shutil.rmtree(temp_dir)

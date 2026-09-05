@@ -14,6 +14,7 @@ from backend.schemas.incident import (
 from backend.repositories.incident_repository import IncidentRepository
 from backend import inference_service
 from backend.services.priority_service import PriorityService
+from backend.services.response_service import ResponseService
 
 class IncidentService:
     def __init__(self, repository: IncidentRepository):
@@ -139,9 +140,12 @@ class IncidentService:
         incident.verification.correction_notes = verify_data.notes
         incident.verification.verified_at = datetime.utcnow()
         
-        # Mark priority stale if verification is updated
+        # Mark priority and response plan stale if verification is updated
         if incident.priority.status == "CALCULATED":
             incident.priority.status = "STALE"
+            
+        if incident.response_plan.status in ["DRAFT", "READY_FOR_APPROVAL", "APPROVED"]:
+            incident.response_plan.status = "STALE"
         
         incident.status = IncidentStatus.VERIFIED
         incident.updated_at = datetime.utcnow()
@@ -155,6 +159,32 @@ class IncidentService:
             
         priority_info = PriorityService.calculate_priority(incident)
         incident.priority = priority_info
+        incident.updated_at = datetime.utcnow()
+        
+        # Mark response plan stale if priority is recalculated
+        if incident.response_plan.status in ["DRAFT", "READY_FOR_APPROVAL", "APPROVED"]:
+            incident.response_plan.status = "STALE"
+        
+        return self.repository.update(incident)
+
+    def generate_response_plan(self, incident_id: str) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+            
+        plan = ResponseService.generate_response_plan(incident)
+        incident.response_plan = plan
+        incident.updated_at = datetime.utcnow()
+        
+        return self.repository.update(incident)
+        
+    def approve_response_plan(self, incident_id: str, approver_name: str) -> Incident:
+        incident = self.repository.get_by_id(incident_id)
+        if not incident:
+            raise ValueError("Incident not found")
+            
+        plan = ResponseService.approve_response_plan(incident, approver_name)
+        incident.response_plan = plan
         incident.updated_at = datetime.utcnow()
         
         return self.repository.update(incident)
